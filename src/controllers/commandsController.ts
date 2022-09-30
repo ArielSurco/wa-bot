@@ -2,7 +2,8 @@
 import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticker-formatter';
 
 // Internal deps
-import { getMedia, videoToSticker } from '../utils/messageUtils';
+import { generateMessageID } from '@adiwajshing/baileys';
+import { getMedia, getMessageText, videoToSticker } from '../utils/messageUtils';
 import { CommandParamsInterface } from '../constants/interfaces';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
@@ -23,10 +24,35 @@ export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { quoted: msg });
 };
 
-export const sendStatus = ({ bot, msg }) => {
+export const sendStatus = ({ bot, msg }: CommandParamsInterface) => {
   bot.sendMessage(msg.key.remoteJid, { text: 'Online' }, { quoted: msg });
 };
 
-export const sendCoins = ({ bot, msg, user }) => {
+export const sendCoins = ({ bot, msg, user }: CommandParamsInterface) => {
   bot.sendMessage(msg.key.remoteJid, { text: `Tienes ${user.getCoins()} coins` }, { quoted: msg });
+};
+
+export const createPoll = async ({ bot, msg }: CommandParamsInterface) => {
+  const msgText = getMessageText(msg);
+  const [pollTitle, ...rest] = msgText
+    .split(' ')
+    .slice(1)
+    .join(' ')
+    .split(',');
+  const pollOptions = rest
+    .map((option) => option.trim())
+    .map((optionName) => ({ optionName }));
+  const pollCreationMessage = {
+    name: pollTitle,
+    options: pollOptions,
+    encKey: new Uint8Array(32),
+    selectableOptionsCount: 1,
+  };
+  await bot.relayMessage(
+    msg.key.remoteJid,
+    { pollCreationMessage },
+    {
+      messageId: generateMessageID(),
+    },
+  );
 };

@@ -1,6 +1,6 @@
 // External deps
 import makeWASocket, {
-  AnyMessageContent, MiscMessageGenerationOptions, useMultiFileAuthState, WAMessage,
+  AnyMessageContent, MiscMessageGenerationOptions, proto, useMultiFileAuthState, WAMessage,
 } from '@adiwajshing/baileys';
 
 // Internal deps
@@ -99,6 +99,10 @@ class Bot {
 
   sendMessage(chatId: string, message: AnyMessageContent, options: MiscMessageGenerationOptions) {
     return this.sock.sendMessage(chatId, message, options);
+  }
+
+  relayMessage(chatId: string, message: proto.IMessage, options) {
+    return this.sock.relayMessage(chatId, message, options);
   }
 }
 

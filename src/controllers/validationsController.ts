@@ -1,5 +1,5 @@
 import { CommandParamsInterface } from '../constants/interfaces';
-import { getQuotedMessage, hasMediaForSticker } from '../utils/messageUtils';
+import { getMessageText, getQuotedMessage, hasMediaForSticker } from '../utils/messageUtils';
 
 export const createStickerValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
   const quotedMessage = getQuotedMessage(msg);
@@ -8,4 +8,24 @@ export const createStickerValidation = ({ bot, msg }: CommandParamsInterface): b
   return false;
 };
 
-export default createStickerValidation;
+export const createPollValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
+  const msgText = getMessageText(msg);
+  const [pollTitle, ...rest] = msgText
+    .split(' ')
+    .slice(1)
+    .join(' ')
+    .split(',');
+  const pollOptions = rest
+    .map((option) => option.trim())
+    .map((optionName) => ({ optionName }));
+
+  if (!pollTitle) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'La encuesta debe tener un título' }, { quoted: msg });
+    return false;
+  }
+  if (pollOptions.length < 2) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'La encuesta debe tener 2 o más opciones' }, { quoted: msg });
+    return false;
+  }
+  return true;
+};

@@ -1,7 +1,9 @@
 import Command from '../models/Command';
-import { createSticker, sendStatus, sendCoins } from '../controllers/commandsController';
+import {
+  createSticker, sendStatus, sendCoins, createPoll,
+} from '../controllers/commandsController';
 import { RoleEnum } from './enums';
-import { createStickerValidation } from '../controllers/validationsController';
+import { createStickerValidation, createPollValidation } from '../controllers/validationsController';
 
 export const regularUserCommands = [
   {
@@ -30,6 +32,18 @@ export const regularUserCommands = [
   },
 ];
 
+export const adminCommands = [
+  {
+    name: '/poll',
+    description: 'Crea una encuesta',
+    price: 0,
+    minRole: RoleEnum.ADMIN,
+    apply: createPoll,
+    validate: createPollValidation,
+  },
+];
+
 export const commands = [
   ...regularUserCommands.map((comm) => new Command(comm)),
+  ...adminCommands.map((comm) => new Command(comm)),
 ];
