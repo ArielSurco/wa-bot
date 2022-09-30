@@ -1,18 +1,27 @@
 // External deps
 import makeWASocket, {
-  AnyMessageContent, MiscMessageGenerationOptions, proto, useMultiFileAuthState, WAMessage,
+  AnyMessageContent,
+  GroupMetadata,
+  MessageRelayOptions,
+  MiscMessageGenerationOptions,
+  proto,
+  useMultiFileAuthState,
+  WAMessage,
 } from '@adiwajshing/baileys';
 
 // Internal deps
 import User from './User';
+import Command from './Command';
+import MessageRetryHandler from './MessageRetryHandler';
 import { connectionUpdate } from '../controllers/connectionController';
 import { getData, setData } from '../utils/files';
 import { getRol } from '../utils/rols';
 import { setChatsController } from '../controllers/chatsController';
 import { receiveMsg } from '../controllers/messageController';
-import Command from './Command';
 import { commands } from '../constants/commands';
 import { RoleEnum } from '../constants/enums';
+import { isGroup } from '../utils/messageUtils';
+import { defaultUsers } from '../constants/constants';
 
 class Bot {
   users: Array<User>;
@@ -23,17 +32,19 @@ class Bot {
 
   constructor() {
     const usersData = getData('users').map((user) => new User(user));
-    this.users = usersData?.length ? usersData : [];
+    this.users = usersData?.length ? usersData : defaultUsers;
     this.commands = commands;
   }
 
   async startSock() {
     const { state, saveCreds } = await useMultiFileAuthState('auth');
+    const handler = new MessageRetryHandler();
 
     const sock = makeWASocket({
       syncFullHistory: false,
       printQRInTerminal: true,
       auth: state,
+      getMessage: handler.messageRetryHandler,
     });
 
     setInterval(() => {
@@ -76,15 +87,17 @@ class Bot {
   }
 
   async getMessageUser(msg: WAMessage) {
-    let user = this.getUser(msg.key.participant);
-    if (!user) {
+    let user = isGroup(msg.key.remoteJid)
+      ? this.getUser(msg.key.participant)
+      : this.getUser(msg.key.remoteJid);
+    if (!user && isGroup(msg.key.remoteJid)) {
       const groupId = msg.key.remoteJid;
-      const groupMetadata = await this.sock.groupMetadata(groupId);
+      const groupMetadata: GroupMetadata = await this.sock.groupMetadata(groupId);
       const participant = groupMetadata.participants
         .find((p) => p.id === msg.key.participant);
       const role = getRol(participant.admin);
       const newUser = new User({
-        id: msg.key.participant, role,
+        id: msg.key.participant, role: { [groupId]: role },
       });
       user = newUser;
       this.setUsers([...this.getUsers(), newUser]);
@@ -101,7 +114,7 @@ class Bot {
     return this.sock.sendMessage(chatId, message, options);
   }
 
-  relayMessage(chatId: string, message: proto.IMessage, options) {
+  relayMessage(chatId: string, message: proto.IMessage, options: MessageRelayOptions) {
     return this.sock.relayMessage(chatId, message, options);
   }
 }

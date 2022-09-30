@@ -3,7 +3,7 @@ import {
   createSticker, sendStatus, sendCoins, createPoll,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
-import { createStickerValidation, createPollValidation } from '../controllers/validationsController';
+import { createStickerValidation, createPollValidation, withoutValidation } from '../controllers/validationsController';
 
 export const regularUserCommands = [
   {
@@ -12,7 +12,7 @@ export const regularUserCommands = [
     price: 0,
     minRole: RoleEnum.REGULAR,
     apply: sendStatus,
-    validate: () => true,
+    validate: withoutValidation,
   },
   {
     name: '/coins',
@@ -20,7 +20,7 @@ export const regularUserCommands = [
     price: 0,
     minRole: RoleEnum.REGULAR,
     apply: sendCoins,
-    validate: () => true,
+    validate: withoutValidation,
   },
   {
     name: '/st',

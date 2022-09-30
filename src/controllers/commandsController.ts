@@ -3,8 +3,11 @@ import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticke
 
 // Internal deps
 import { generateMessageID } from '@adiwajshing/baileys';
-import { getMedia, getMessageText, videoToSticker } from '../utils/messageUtils';
+import {
+  getMedia, getMessageText, isGroup, videoToSticker,
+} from '../utils/messageUtils';
 import { CommandParamsInterface } from '../constants/interfaces';
+import { getRoleText } from '../utils/rols';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   if (!bot || !msg) return;
@@ -55,4 +58,15 @@ export const createPoll = async ({ bot, msg }: CommandParamsInterface) => {
       messageId: generateMessageID(),
     },
   );
+};
+
+export const getRole = async ({ bot, msg, user }: CommandParamsInterface) => {
+  const chatId = msg.key.remoteJid;
+  if (!isGroup(chatId)) {
+    const role = getRoleText(user.role.globalRole);
+    await bot.sendMessage(chatId, { text: `Tu rol es: ${role}` }, { quoted: msg });
+  } else {
+    const role = getRoleText(user.role[chatId]);
+    await bot.sendMessage(chatId, { text: `Tu rol es ${role}` }, { quoted: msg });
+  }
 };

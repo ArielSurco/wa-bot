@@ -1,13 +1,15 @@
 import { RoleEnum } from '../constants/enums';
 
+type UserRole = object & { globalRole?: RoleEnum }
+
 class User {
   id: string;
 
   coins: number;
 
-  role: RoleEnum;
+  role: UserRole;
 
-  constructor({ id, coins = 0, role = RoleEnum.REGULAR }) {
+  constructor({ id, coins = 0, role = { } }) {
     this.id = id;
     this.coins = coins;
     this.role = role;

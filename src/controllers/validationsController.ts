@@ -1,5 +1,9 @@
 import { CommandParamsInterface } from '../constants/interfaces';
-import { getMessageText, getQuotedMessage, hasMediaForSticker } from '../utils/messageUtils';
+import {
+  getMessageText, getQuotedMessage, hasMediaForSticker,
+} from '../utils/messageUtils';
+
+export const withoutValidation = () => true;
 
 export const createStickerValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
   const quotedMessage = getQuotedMessage(msg);

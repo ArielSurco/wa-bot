@@ -81,3 +81,5 @@ export const hasMediaForSticker = (msg: proto.IMessage) => {
   const hasMedia = !!(msg?.imageMessage || msg?.videoMessage);
   return hasMedia;
 };
+
+export const isGroup = (chatId: string) => !chatId.includes('whatsapp.net');
