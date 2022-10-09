@@ -1,4 +1,4 @@
-import { WAMessage } from '@adiwajshing/baileys';
+import { ParticipantAction, WAMessage } from '@adiwajshing/baileys';
 import Bot from '../models/Bot';
 import User from '../models/User';
 
@@ -8,12 +8,19 @@ export interface CommandParamsInterface {
   msg: WAMessage | null;
 }
 
-export interface GroupCommandsInterface {
-  active: Array<string>,
-  inactive: Array<string>,
-}
-
 export interface GroupActionsInterface {
   forbidden: Array<string>,
   allowed: Array<string>,
+}
+
+export interface TempBanInterface {
+  id: string,
+  reason: string,
+  returnDate: string,
+}
+
+export interface ParticipantsUpdate {
+  id: string,
+  participants: Array<string>,
+  action: ParticipantAction
 }

@@ -10,8 +10,8 @@ import {
 import { tmpdir } from 'os';
 
 export const getMedia = async (msg) => {
-  const messageType = Object.keys(msg?.message)[0];
-  const stream = await downloadContentFromMessage(msg.message[messageType], messageType.replace('Message', '') as MediaType);
+  const messageType = Object.keys(msg)[0];
+  const stream = await downloadContentFromMessage(msg[messageType], messageType.replace('Message', '') as MediaType);
   let buffer = Buffer.from([]);
   // eslint-disable-next-line no-restricted-syntax
   for await (const chunk of stream) {
@@ -70,6 +70,7 @@ export const videoToSticker = async (media) => {
 export const getMessageText = (msg: WAMessage) => msg.message?.conversation
   || msg.message?.imageMessage?.caption
   || msg.message?.videoMessage?.caption
+  || msg.message?.extendedTextMessage?.text
   || '';
 
 export const getQuotedMessage = (msg: WAMessage) => {
@@ -83,3 +84,9 @@ export const hasMediaForSticker = (msg: proto.IMessage) => {
 };
 
 export const isGroup = (chatId: string) => !chatId.includes('whatsapp.net');
+
+export const isLink = (msgText: string) => {
+  // eslint-disable-next-line no-useless-escape
+  const regExp = /(([a-z]+:\/\/)?(([a-z0-9\-]+\.)+([a-z]{2}|aero|arpa|biz|com|coop|edu|gov|info|int|jobs|mil|museum|name|nato|net|org|pro|travel|local|internal))(:[0-9]{1,5})?(\/[a-z0-9_\-\.~]+)*(\/([a-z0-9_\-\.]*)(\?[a-z0-9+_\-\.%=&amp;]*)?)?(#[a-zA-Z0-9!$&'()*+.=-_~:@/?]*)?)(\s+|$)/gi;
+  return regExp.test(msgText);
+};

@@ -1,6 +1,6 @@
 import Command from '../models/Command';
 import {
-  createSticker, sendStatus, sendCoins, createPoll,
+  createSticker, sendStatus, sendCoins, createPoll, groupInfo, activeWelcome, activeAntiLinks,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import { createStickerValidation, createPollValidation, withoutValidation } from '../controllers/validationsController';
@@ -41,9 +41,37 @@ export const adminCommands = [
     apply: createPoll,
     validate: createPollValidation,
   },
+  {
+    name: '/welcome on',
+    description: 'Activa el mensaje de bienvenida',
+    price: 0,
+    minRole: RoleEnum.ADMIN,
+    apply: activeWelcome,
+    validate: withoutValidation,
+  },
+  {
+    name: '/antilinks',
+    description: 'Activa el baneo automático cuando alguien manda un link',
+    price: 0,
+    minRole: RoleEnum.ADMIN,
+    apply: activeAntiLinks,
+    validate: withoutValidation,
+  },
+];
+
+export const creatorCommands = [
+  {
+    name: '/g info',
+    description: 'Muestra informacion del grupo',
+    price: 0,
+    minRole: RoleEnum.CREATOR,
+    apply: groupInfo,
+    validate: withoutValidation,
+  },
 ];
 
 export const commands = [
   ...regularUserCommands.map((comm) => new Command(comm)),
   ...adminCommands.map((comm) => new Command(comm)),
+  ...creatorCommands.map((comm) => new Command(comm)),
 ];

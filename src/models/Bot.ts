@@ -7,32 +7,43 @@ import makeWASocket, {
   proto,
   useMultiFileAuthState,
   WAMessage,
+  WASocket,
 } from '@adiwajshing/baileys';
 
 // Internal deps
 import User from './User';
 import Command from './Command';
 import MessageRetryHandler from './MessageRetryHandler';
+import Group from './Group';
+import GroupAction from './GroupAction';
 import { connectionUpdate } from '../controllers/connectionController';
 import { getData, setData } from '../utils/files';
 import { getRol } from '../utils/rols';
 import { setChatsController } from '../controllers/chatsController';
 import { receiveMsg } from '../controllers/messageController';
 import { commands } from '../constants/commands';
-import { RoleEnum } from '../constants/enums';
+import { GroupActionEnum, GroupActionType, RoleEnum } from '../constants/enums';
 import { isGroup } from '../utils/messageUtils';
 import { defaultUsers } from '../constants/constants';
+import { groupParticipantsUpdate } from '../controllers/groupController';
+import { groupActions } from '../constants/groupActions';
 
 class Bot {
   users: Array<User>;
 
+  groups: Array<Group>;
+
   commands: Array<Command>;
 
-  sock: any;
+  actions: Array<GroupAction> = groupActions;
+
+  sock: WASocket;
 
   constructor() {
     const usersData = getData('users').map((user) => new User(user));
+    const groupsData = getData('groups').map((group) => new Group(group));
     this.users = usersData?.length ? usersData : defaultUsers;
+    this.groups = groupsData?.length ? groupsData : [];
     this.commands = commands;
   }
 
@@ -49,13 +60,15 @@ class Bot {
 
     setInterval(() => {
       this.setUsers(this.users);
-    }, 600000);
+    }, 60000);
 
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', (update) => connectionUpdate(this, update));
 
     sock.ev.on('chats.set', ({ chats }) => setChatsController(this, chats));
+
+    sock.ev.on('group-participants.update', (update) => groupParticipantsUpdate(this, update));
 
     sock.ev.on('messages.upsert', ({ messages, type }) => {
       if (type === 'notify') {
@@ -80,6 +93,21 @@ class Bot {
 
   getUser(id: string) {
     return this.users.find((user) => user.id === id);
+  }
+
+  getGroup(id: string) {
+    return this.groups.find((group) => group.id === id);
+  }
+
+  getGroups() {
+    return this.groups;
+  }
+
+  getActions(type: GroupActionType, actions: GroupActionEnum[]) {
+    const filteredActions = this.actions.filter((action) => action.type === type);
+    return filteredActions
+      .filter((action) => actions
+        .some((groupAction) => groupAction === action.id));
   }
 
   getCommands(role?: RoleEnum) {
@@ -108,6 +136,11 @@ class Bot {
   setUsers(users: Array<User>) {
     this.users = users;
     setData('users', users);
+  }
+
+  setGroups(groups: Array<Group>) {
+    this.groups = groups;
+    setData('groups', groups);
   }
 
   sendMessage(chatId: string, message: AnyMessageContent, options: MiscMessageGenerationOptions) {

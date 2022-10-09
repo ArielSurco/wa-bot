@@ -1,7 +1,17 @@
+// External deps
 import { Boom } from '@hapi/boom';
 import { DisconnectReason, ConnectionState } from '@adiwajshing/baileys';
 
-export const connectionUpdate = (bot, { connection, lastDisconnect }: Partial<ConnectionState>) => {
+// Internal deps
+import Bot from '../models/Bot';
+
+export const connectionUpdate = (
+  bot: Bot,
+  {
+    connection,
+    lastDisconnect,
+  }: Partial<ConnectionState>,
+) => {
   if (connection === 'close') {
   // reconnect if not logged out
     if (

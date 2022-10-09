@@ -4,27 +4,29 @@ import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticke
 // Internal deps
 import { generateMessageID } from '@adiwajshing/baileys';
 import {
-  getMedia, getMessageText, isGroup, videoToSticker,
+  getMedia, getMessageText, hasMediaForSticker, isGroup, videoToSticker, getQuotedMessage,
 } from '../utils/messageUtils';
 import { CommandParamsInterface } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
+import { GroupActionEnum } from '../constants/enums';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   if (!bot || !msg) return;
-  let mediaData: Buffer = await getMedia(msg);
-  const messageType = Object.keys(msg.message)[0];
-  const mimetype = msg.message[messageType]?.mimetype;
+  const message = hasMediaForSticker(msg.message) ? msg.message : getQuotedMessage(msg);
+  let mediaData: Buffer = await getMedia(message);
+  const messageType = Object.keys(message)[0];
+  const mimetype = message[messageType]?.mimetype;
   if (mimetype?.includes('video')) {
     mediaData = await videoToSticker({ mimetype, buffer: mediaData });
   }
   const stickerOptions = {
     pack: 'Kingdom Ecchi Bot',
     author: 'Kingdom Ecchi Bot',
-    type: StickerTypes.DEFAULT,
+    type: StickerTypes.FULL,
     quality: 50,
   };
   const generateSticker = await createStickerFromMedia(mediaData, stickerOptions);
-  bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { quoted: msg });
+  bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { });
 };
 
 export const sendStatus = ({ bot, msg }: CommandParamsInterface) => {
@@ -69,4 +71,24 @@ export const getRole = async ({ bot, msg, user }: CommandParamsInterface) => {
     const role = getRoleText(user.role[chatId]);
     await bot.sendMessage(chatId, { text: `Tu rol es ${role}` }, { quoted: msg });
   }
+};
+
+export const groupInfo = async ({ bot, msg }: CommandParamsInterface) => {
+  const group = bot.getGroup(msg.key.remoteJid);
+  const groupInfoText = `Participantes: ${group.participants.length}`;
+  bot.sendMessage(msg.key.remoteJid, { text: groupInfoText }, { quoted: msg });
+};
+
+export const activeWelcome = ({ bot, msg }: CommandParamsInterface) => {
+  const groupId = msg.key.remoteJid;
+  const group = bot.getGroup(groupId);
+  group.addGroupAction(GroupActionEnum.WELCOME);
+  bot.sendMessage(groupId, { text: 'Bienvenidas activadas' }, { quoted: msg });
+};
+
+export const activeAntiLinks = ({ bot, msg }: CommandParamsInterface) => {
+  const groupId = msg.key.remoteJid;
+  const group = bot.getGroup(groupId);
+  group.addGroupAction(GroupActionEnum.ANTI_LINKS);
+  bot.sendMessage(groupId, { text: 'Antilinks activado' }, { quoted: msg });
 };

@@ -1,4 +1,7 @@
+import { WAMessage } from '@adiwajshing/baileys';
+import User from '../models/User';
 import { RoleEnum } from '../constants/enums';
+import { isGroup } from './messageUtils';
 
 export const getRol = (role: string) => {
   if (role === 'superadmin') { return RoleEnum.SUPER_ADMIN; }
@@ -23,6 +26,13 @@ export const getRoleText = (role: RoleEnum) => {
     return 'CREADOR';
   }
   return '';
+};
+
+export const getUserRole = (user: User, msg: WAMessage) => {
+  const role: RoleEnum = isGroup(msg.key.remoteJid)
+    ? user.role[msg.key.remoteJid]
+    : user.role.globalRole;
+  return role;
 };
 
 export const isCreator = (userId: string) => userId === process.env.CREATOR_ID

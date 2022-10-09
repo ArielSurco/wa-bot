@@ -3,6 +3,7 @@ import { Chat, GroupParticipant } from '@adiwajshing/baileys';
 
 // Internal deps
 import Bot from '../models/Bot';
+import Group from '../models/Group';
 import User from '../models/User';
 import { RoleEnum } from '../constants/enums';
 import { isGroup } from '../utils/messageUtils';
@@ -14,6 +15,10 @@ export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
   try {
     const sock = bot.getSock();
     const chatGroups = chats.filter((chat) => !chat.readOnly && isGroup(chat.id));
+    let newParticipantsAdded = 0;
+    let newGroupsAdded = 0;
+
+    // Get all the participants of the groups where the bot is
     const groupParticipantsArray: ExtendedGroupParticipant[][] = await Promise.all(
       chatGroups.map(async (chat) => {
         const { participants } = await sock.groupMetadata(chat.id);
@@ -25,8 +30,9 @@ export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
       }),
     );
     const allParticipants: ExtendedGroupParticipant[] = groupParticipantsArray.flat();
+
+    // Format all participants and add them to the bot data if they are new
     const botUsers: User[] = bot.getUsers();
-    let newParticipantsAdded = 0;
     allParticipants.forEach((participant) => {
       const userIndex = botUsers.findIndex((user) => participant.id === user.id);
       if (userIndex >= 0) {
@@ -42,7 +48,33 @@ export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
       }
     });
     bot.setUsers(botUsers);
+
+    // Format all groups and add them to the bot data if they are new
+    const botGroups: Group[] = bot.getGroups();
+    await Promise.all(
+      chatGroups.map(async (group) => {
+        const groupIndex = botGroups.findIndex((g) => g.id === group.id);
+        const {
+          participants: groupParticipants,
+          desc: descriptionBuffer,
+        } = await sock.groupMetadata(group.id);
+        const description = descriptionBuffer?.toString() || '';
+        const participants = groupParticipants.map((participant) => participant.id);
+        if (groupIndex >= 0) {
+          botGroups[groupIndex].participants = participants;
+        } else {
+          botGroups.push(new Group({
+            id: group.id, name: group.name, description, participants,
+          }));
+          newGroupsAdded += 1;
+        }
+      }),
+    );
+    bot.setGroups(botGroups);
+
+    // Show new participants and groups added
     console.log('New participants added', newParticipantsAdded);
+    console.log('New groups added', newGroupsAdded);
   } catch (err) {
     console.log(err?.message);
   }

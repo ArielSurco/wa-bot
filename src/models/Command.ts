@@ -1,4 +1,7 @@
 import { RoleEnum } from '../constants/enums';
+import { CommandParamsInterface } from '../constants/interfaces';
+import { isGroup } from '../utils/messageUtils';
+import { getUserRole } from '../utils/rols';
 
 class Command {
   name: string;
@@ -24,10 +27,15 @@ class Command {
     this.validate = validate;
   }
 
-  use({ bot, msg, user }) {
+  use({ bot, msg, user }: CommandParamsInterface) {
     try {
-      if (user.role < this.minRole) {
+      const role = getUserRole(user, msg);
+      if (role < this.minRole) {
         bot.sendMessage(msg.key.remoteJid, { text: 'No tienes el rol necesario para usar este comando' }, { quoted: msg });
+        return;
+      }
+      if (this.minRole === RoleEnum.ADMIN && !isGroup(msg.key.remoteJid)) {
+        bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
         return;
       }
       if (user.getCoins() < this.price) {
