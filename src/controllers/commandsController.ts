@@ -92,3 +92,46 @@ export const activeAntiLinks = ({ bot, msg }: CommandParamsInterface) => {
   group.addGroupAction(GroupActionEnum.ANTI_LINKS);
   bot.sendMessage(groupId, { text: 'Antilinks activado' }, { quoted: msg });
 };
+
+export const sendMenu = async ({ bot, msg, user }: CommandParamsInterface) => {
+  const menuMessage = user.getMenu(msg.key.remoteJid);
+  bot.sendMessage(msg.key.remoteJid, menuMessage, { quoted: msg });
+};
+
+export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
+  const msgText = getMessageText(msg);
+  const [, ...rest] = msgText.split(' ');
+  const typeChange = rest[0];
+  const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid;
+  const users = mentions.map((mentionJid) => bot.getUser(mentionJid));
+
+  switch (typeChange) {
+  case 'coins': {
+    const changeCoinsOption = rest[1];
+    const coins = parseInt(rest[2], 10);
+
+    switch (changeCoinsOption) {
+    case 'add':
+      users.forEach((userChange) => userChange.addCoins(coins));
+      break;
+    case 'remove':
+      users.forEach((userChange) => userChange.subtractCoins(coins));
+      break;
+    case 'set':
+      users.forEach((userChange) => userChange.setCoins(coins));
+      break;
+    default:
+      return;
+    }
+
+    if (mentions.length === 1) {
+      await bot.sendMessage(msg.key.remoteJid, { text: `Ahora @${mentions[0].split('@')[0]} tiene ${users[0].getCoins()} coins`, mentions: [mentions[0]] }, { quoted: msg });
+    } else {
+      await bot.sendMessage(msg.key.remoteJid, { text: 'Cambios realizados' }, { quoted: msg });
+    }
+    break;
+  }
+  default:
+    break;
+  }
+};

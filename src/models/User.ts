@@ -1,4 +1,7 @@
 import { RoleEnum } from '../constants/enums';
+import { menuMessage } from '../constants/menu';
+import { isGroup } from '../utils/messageUtils';
+import { isCreator } from '../utils/rols';
 
 type UserRole = object & { globalRole?: RoleEnum }
 
@@ -17,6 +20,18 @@ class User {
 
   getCoins() {
     return this.coins;
+  }
+
+  getMenu(groupId: string) {
+    let role: RoleEnum;
+    if (groupId && isGroup(groupId)) {
+      role = isCreator(this.id) ? this.role.globalRole : this.role[groupId];
+    }
+    if (!groupId || !isGroup(groupId)) {
+      role = this.role.globalRole;
+    }
+
+    return menuMessage(role);
   }
 
   addCoins(coins) {

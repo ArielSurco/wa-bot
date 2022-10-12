@@ -33,3 +33,45 @@ export const createPollValidation = ({ bot, msg }: CommandParamsInterface): bool
   }
   return true;
 };
+
+export const handleChangeValidation = ({ bot, msg }: CommandParamsInterface) => {
+  const msgText = getMessageText(msg);
+  const [, ...rest] = msgText.split(' ');
+  const typeChange = rest[0];
+  const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid;
+
+  switch (typeChange) {
+  case 'coins': {
+    const hasOptions = !parseInt(rest[1], 10);
+    const coins = parseInt(rest[2], 10);
+
+    if (!hasOptions) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar la forma de modificar las coins' }, { quoted: msg });
+      return false;
+    }
+
+    if (!mentions || !mentions.length) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar a quién asignarle coins' }, { quoted: msg });
+      return false;
+    }
+
+    if (!coins) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar la cantidad de coins' }, { quoted: msg });
+      return false;
+    }
+
+    switch (rest[1]) {
+    case 'add':
+    case 'remove':
+    case 'set':
+      return true;
+    default:
+      bot.sendMessage(msg.key.remoteJid, { text: `${rest[1]} no es una opción válida. Las opciones son 'add', 'remove' o 'set'` }, { quoted: msg });
+      return false;
+    }
+  }
+  default:
+    bot.sendMessage(msg.key.remoteJid, { text: 'No se reconoce el atributo a cambiar' }, { quoted: msg });
+    return false;
+  }
+};

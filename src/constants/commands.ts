@@ -1,11 +1,29 @@
 import Command from '../models/Command';
 import {
-  createSticker, sendStatus, sendCoins, createPoll, groupInfo, activeWelcome, activeAntiLinks,
+  createSticker,
+  sendStatus,
+  sendCoins,
+  createPoll,
+  groupInfo,
+  activeWelcome,
+  activeAntiLinks,
+  sendMenu,
+  handleChange,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
-import { createStickerValidation, createPollValidation, withoutValidation } from '../controllers/validationsController';
+import {
+  createStickerValidation, createPollValidation, withoutValidation, handleChangeValidation,
+} from '../controllers/validationsController';
 
 export const regularUserCommands = [
+  {
+    name: '/menu',
+    description: 'Muestra el menú de comandos',
+    price: 0,
+    minRole: RoleEnum.REGULAR,
+    apply: sendMenu,
+    validate: withoutValidation,
+  },
   {
     name: '/status',
     description: 'Indica si el bot esta vivo',
@@ -60,6 +78,15 @@ export const adminCommands = [
 ];
 
 export const creatorCommands = [
+  {
+    name: '/ch',
+    description: 'Cambia los atributos que se indiquen',
+    optionsStr: '[coins|role]',
+    price: 0,
+    minRole: RoleEnum.CREATOR,
+    apply: handleChange,
+    validate: handleChangeValidation,
+  },
   {
     name: '/g info',
     description: 'Muestra informacion del grupo',

@@ -3,12 +3,24 @@ import { CommandParamsInterface } from '../constants/interfaces';
 import { isGroup } from '../utils/messageUtils';
 import { getUserRole } from '../utils/rols';
 
+interface CommandConstructor {
+  name: string;
+  price: number;
+  description: string;
+  optionsStr?: string;
+  minRole: RoleEnum;
+  apply: Function,
+  validate: Function
+}
+
 class Command {
   name: string;
 
   price: number;
 
   description: string;
+
+  optionsStr: string;
 
   minRole: RoleEnum;
 
@@ -17,11 +29,12 @@ class Command {
   validate: Function;
 
   constructor({
-    name, price, description, minRole, apply, validate,
-  }) {
+    name, price, description, optionsStr, minRole, apply, validate,
+  }: CommandConstructor) {
     this.name = name;
     this.price = price;
     this.description = description;
+    this.optionsStr = optionsStr;
     this.minRole = minRole;
     this.execute = apply;
     this.validate = validate;
