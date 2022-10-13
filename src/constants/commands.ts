@@ -81,7 +81,7 @@ export const creatorCommands = [
   {
     name: '/ch',
     description: 'Cambia los atributos que se indiquen',
-    optionsStr: '[coins|role]',
+    optionsStr: '[coins|group]',
     price: 0,
     minRole: RoleEnum.CREATOR,
     apply: handleChange,

@@ -4,6 +4,7 @@ import { ParticipantsUpdate } from '../constants/interfaces';
 
 export const groupParticipantsUpdate = async (bot: Bot, updateNotification: ParticipantsUpdate) => {
   const group = bot.getGroup(updateNotification.id);
+  if (!group) return;
   const groupActions = group.getGroupActions();
   const { participants } = updateNotification;
   const actions = bot.getActions(GroupActionType.GROUP_PARTICIPANTS_UPDATE, groupActions);

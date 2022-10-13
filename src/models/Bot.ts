@@ -118,7 +118,7 @@ class Bot {
     let user = isGroup(msg.key.remoteJid)
       ? this.getUser(msg.key.participant)
       : this.getUser(msg.key.remoteJid);
-    if (!user && isGroup(msg.key.remoteJid)) {
+    if (!user && isGroup(msg.key.remoteJid) && this.getGroup(msg.key.remoteJid)) {
       const groupId = msg.key.remoteJid;
       const groupMetadata: GroupMetadata = await this.sock.groupMetadata(groupId);
       const participant = groupMetadata.participants

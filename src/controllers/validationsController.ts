@@ -1,6 +1,6 @@
 import { CommandParamsInterface } from '../constants/interfaces';
 import {
-  getMessageText, getQuotedMessage, hasMediaForSticker,
+  getMessageText, getQuotedMessage, hasMediaForSticker, isGroup,
 } from '../utils/messageUtils';
 
 export const withoutValidation = () => true;
@@ -70,8 +70,40 @@ export const handleChangeValidation = ({ bot, msg }: CommandParamsInterface) => 
       return false;
     }
   }
+  case 'group': {
+    const changeGroupOption = rest[1];
+
+    if (!changeGroupOption) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar la forma de modificar el grupo' }, { quoted: msg });
+      return false;
+    }
+
+    if (!isGroup(msg.key.remoteJid)) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
+      return false;
+    }
+    switch (changeGroupOption) {
+    case 'add':
+      if (bot.getGroup(msg.key.remoteJid)) {
+        bot.sendMessage(msg.key.remoteJid, { text: 'El grupo ya está agregado' }, { quoted: msg });
+        return false;
+      }
+      break;
+    case 'remove':
+      if (!bot.getGroup(msg.key.remoteJid)) {
+        bot.sendMessage(msg.key.remoteJid, { text: 'El grupo debe estar agregado para poder realizar esta acción' }, { quoted: msg });
+        return false;
+      }
+      break;
+    default:
+      bot.sendMessage(msg.key.remoteJid, { text: `${changeGroupOption} no es una opción válida. Las opciones son 'add'` }, { quoted: msg });
+      return false;
+    }
+    break;
+  }
   default:
     bot.sendMessage(msg.key.remoteJid, { text: 'No se reconoce el atributo a cambiar' }, { quoted: msg });
     return false;
   }
+  return true;
 };

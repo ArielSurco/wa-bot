@@ -9,6 +9,7 @@ import {
 import { CommandParamsInterface } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
 import { GroupActionEnum } from '../constants/enums';
+import { setChatsController } from './chatsController';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   if (!bot || !msg) return;
@@ -102,11 +103,11 @@ export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
   const msgText = getMessageText(msg);
   const [, ...rest] = msgText.split(' ');
   const typeChange = rest[0];
-  const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid;
-  const users = mentions.map((mentionJid) => bot.getUser(mentionJid));
 
   switch (typeChange) {
   case 'coins': {
+    const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid;
+    const users = mentions.map((mentionJid) => bot.getUser(mentionJid));
     const changeCoinsOption = rest[1];
     const coins = parseInt(rest[2], 10);
 
@@ -128,6 +129,29 @@ export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
       await bot.sendMessage(msg.key.remoteJid, { text: `Ahora @${mentions[0].split('@')[0]} tiene ${users[0].getCoins()} coins`, mentions: [mentions[0]] }, { quoted: msg });
     } else {
       await bot.sendMessage(msg.key.remoteJid, { text: 'Cambios realizados' }, { quoted: msg });
+    }
+    break;
+  }
+  case 'group': {
+    const changeGroupOption = rest[1];
+    switch (changeGroupOption) {
+    case 'add':
+      await setChatsController(
+        bot,
+        [{ id: msg.key.remoteJid }],
+        true,
+      );
+      bot.sendMessage(msg.key.remoteJid, { text: 'Grupo agregado, ahora el bot se puede utilizar en este grupo' }, { quoted: msg });
+      break;
+    case 'remove': {
+      const currentGroups = bot.getGroups();
+      const newGroups = currentGroups.filter((group) => group.id !== msg.key.remoteJid);
+      bot.setGroups(newGroups);
+      bot.sendMessage(msg.key.remoteJid, { text: 'Grupo eliminado, ahora el bot no se puede utilizar en este grupo' }, { quoted: msg });
+      break;
+    }
+    default:
+      break;
     }
     break;
   }

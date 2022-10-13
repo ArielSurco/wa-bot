@@ -10,11 +10,17 @@ import { isGroup } from '../utils/messageUtils';
 import { getRol, isCreator } from '../utils/rols';
 
 type ExtendedGroupParticipant = GroupParticipant & { groupId: string, role: RoleEnum}
+type ChatParam = Chat | { id: string, readOnly?: boolean }
 
-export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
+export const setChatsController = async (bot: Bot, chats: ChatParam[], manualCall = false) => {
   try {
     const sock = bot.getSock();
-    const chatGroups = chats.filter((chat) => !chat.readOnly && isGroup(chat.id));
+    const botGroups = bot.getGroups();
+    const botUsers: User[] = bot.getUsers();
+    const chatGroups = chats
+      .filter((chat) => manualCall || (!chat.readOnly
+        && isGroup(chat.id)
+        && botGroups.some((group) => group.id === chat.id)));
     let newParticipantsAdded = 0;
     let newGroupsAdded = 0;
 
@@ -32,7 +38,6 @@ export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
     const allParticipants: ExtendedGroupParticipant[] = groupParticipantsArray.flat();
 
     // Format all participants and add them to the bot data if they are new
-    const botUsers: User[] = bot.getUsers();
     allParticipants.forEach((participant) => {
       const userIndex = botUsers.findIndex((user) => participant.id === user.id);
       if (userIndex >= 0) {
@@ -50,11 +55,11 @@ export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
     bot.setUsers(botUsers);
 
     // Format all groups and add them to the bot data if they are new
-    const botGroups: Group[] = bot.getGroups();
     await Promise.all(
       chatGroups.map(async (group) => {
         const groupIndex = botGroups.findIndex((g) => g.id === group.id);
         const {
+          subject: groupName,
           participants: groupParticipants,
           desc: descriptionBuffer,
         } = await sock.groupMetadata(group.id);
@@ -64,7 +69,7 @@ export const setChatsController = async (bot: Bot, chats: Array<Chat>) => {
           botGroups[groupIndex].participants = participants;
         } else {
           botGroups.push(new Group({
-            id: group.id, name: group.name, description, participants,
+            id: group.id, name: groupName, description, participants,
           }));
           newGroupsAdded += 1;
         }
