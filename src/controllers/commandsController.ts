@@ -144,8 +144,12 @@ export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
       bot.sendMessage(msg.key.remoteJid, { text: 'Grupo agregado, ahora el bot se puede utilizar en este grupo' }, { quoted: msg });
       break;
     case 'remove': {
-      const currentGroups = bot.getGroups();
-      const newGroups = currentGroups.filter((group) => group.id !== msg.key.remoteJid);
+      const newGroups = bot.getGroups();
+      newGroups.forEach((group, index) => {
+        if (group.id === msg.key.remoteJid) {
+          newGroups[index].setActive(false);
+        }
+      });
       bot.setGroups(newGroups);
       bot.sendMessage(msg.key.remoteJid, { text: 'Grupo eliminado, ahora el bot no se puede utilizar en este grupo' }, { quoted: msg });
       break;

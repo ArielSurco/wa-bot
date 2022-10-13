@@ -7,6 +7,7 @@ interface GroupConstructor {
   description: string,
   participants: Array<string>,
   groupActions?: Array<GroupActionEnum>,
+  active?: boolean,
   private?: boolean,
   tempBans?: Array<TempBanInterface>,
   inactiveCommands?: Array<string>,
@@ -24,6 +25,8 @@ class Group {
 
   groupActions: Array<GroupActionEnum>;
 
+  active: boolean;
+
   private: boolean;
 
   tempBans: Array<TempBanInterface>;
@@ -38,6 +41,7 @@ class Group {
     description,
     participants,
     groupActions = [],
+    active = true,
     private: privateGroup = false,
     tempBans = [],
     inactiveCommands = [],
@@ -48,6 +52,7 @@ class Group {
     this.description = description;
     this.participants = participants;
     this.groupActions = groupActions;
+    this.active = active;
     this.private = privateGroup;
     this.tempBans = tempBans;
     this.inactiveCommands = inactiveCommands;
@@ -68,6 +73,14 @@ class Group {
 
   addGroupAction(groupAction: GroupActionEnum) {
     this.setGroupActions([...this.getGroupActions(), groupAction]);
+  }
+
+  isActive() {
+    return this.active;
+  }
+
+  setActive(active: boolean) {
+    this.active = active;
   }
 }
 

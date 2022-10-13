@@ -89,12 +89,14 @@ export const handleChangeValidation = ({ bot, msg }: CommandParamsInterface) => 
         return false;
       }
       break;
-    case 'remove':
-      if (!bot.getGroup(msg.key.remoteJid)) {
+    case 'remove': {
+      const group = bot.getGroup(msg.key.remoteJid);
+      if (!group || !group.isActive()) {
         bot.sendMessage(msg.key.remoteJid, { text: 'El grupo debe estar agregado para poder realizar esta acción' }, { quoted: msg });
         return false;
       }
       break;
+    }
     default:
       bot.sendMessage(msg.key.remoteJid, { text: `${changeGroupOption} no es una opción válida. Las opciones son 'add'` }, { quoted: msg });
       return false;

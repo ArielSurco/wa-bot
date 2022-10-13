@@ -66,6 +66,7 @@ export const setChatsController = async (bot: Bot, chats: ChatParam[], manualCal
         const description = descriptionBuffer?.toString() || '';
         const participants = groupParticipants.map((participant) => participant.id);
         if (groupIndex >= 0) {
+          if (manualCall) botGroups[groupIndex].setActive(true);
           botGroups[groupIndex].participants = participants;
         } else {
           botGroups.push(new Group({
