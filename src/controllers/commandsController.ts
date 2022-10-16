@@ -88,10 +88,19 @@ export const activeWelcome = ({ bot, msg }: CommandParamsInterface) => {
 };
 
 export const activeAntiLinks = ({ bot, msg }: CommandParamsInterface) => {
+  const [, ...rest] = getMessageText(msg).split(' ');
+  const option = rest[0].toLowerCase();
   const groupId = msg.key.remoteJid;
   const group = bot.getGroup(groupId);
-  group.addGroupAction(GroupActionEnum.ANTI_LINKS);
-  bot.sendMessage(groupId, { text: 'Antilinks activado' }, { quoted: msg });
+
+  if (option === 'on') {
+    group.addGroupAction(GroupActionEnum.ANTI_LINKS);
+    bot.sendMessage(groupId, { text: 'Antilinks activado' }, { quoted: msg });
+  }
+  if (option === 'off') {
+    group.removeGroupAction(GroupActionEnum.ANTI_LINKS);
+    bot.sendMessage(groupId, { text: 'Antilinks desactivado' }, { quoted: msg });
+  }
 };
 
 export const sendMenu = async ({ bot, msg, user }: CommandParamsInterface) => {

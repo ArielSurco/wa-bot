@@ -1,3 +1,4 @@
+import { GroupActionEnum } from '../constants/enums';
 import { CommandParamsInterface } from '../constants/interfaces';
 import {
   getMessageText, getQuotedMessage, hasMediaForSticker, isGroup,
@@ -31,6 +32,43 @@ export const createPollValidation = ({ bot, msg }: CommandParamsInterface): bool
     bot.sendMessage(msg.key.remoteJid, { text: 'La encuesta debe tener 2 o más opciones' }, { quoted: msg });
     return false;
   }
+  return true;
+};
+
+export const antilinksValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
+  if (!isGroup(msg.key.remoteJid)) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo funciona en grupos' }, { quoted: msg });
+    return false;
+  }
+
+  const [, ...rest] = getMessageText(msg).split(' ');
+  const hasOption = !rest.length || !rest[0];
+  const optionsAvailable = ['on', 'off'];
+  const option = hasOption ? rest[0].toLowerCase() : '';
+  const isValidOption = optionsAvailable.includes(option);
+  const group = bot.getGroup(msg.key.remoteJid);
+  const groupHasAntilinksAction = group
+    && group.getGroupActions().includes(GroupActionEnum.ANTI_LINKS);
+  const alreadyAntilinksActive = option === 'on' && groupHasAntilinksAction;
+  const alreadyAntilinksInactive = option === 'off' && !groupHasAntilinksAction;
+
+  if (!hasOption) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar una opción. Opciones disponibles: \'on\' y \'off\'.' }, { quoted: msg });
+    return false;
+  }
+  if (!isValidOption) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar una opción válida.' }, { quoted: msg });
+    return false;
+  }
+  if (alreadyAntilinksActive) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'La acción de antilinks ya está activada.' }, { quoted: msg });
+    return false;
+  }
+  if (alreadyAntilinksInactive) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'La acción de antilinks ya está desactivada.' }, { quoted: msg });
+    return false;
+  }
+
   return true;
 };
 

@@ -72,7 +72,12 @@ class Group {
   }
 
   addGroupAction(groupAction: GroupActionEnum) {
-    this.setGroupActions([...this.getGroupActions(), groupAction]);
+    this.setGroupActions([...this.groupActions, groupAction]);
+  }
+
+  removeGroupAction(groupAction: GroupActionEnum) {
+    const newGroupActions = this.groupActions.filter((action) => action !== groupAction);
+    this.setGroupActions(newGroupActions);
   }
 
   isActive() {

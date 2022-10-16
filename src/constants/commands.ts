@@ -12,7 +12,11 @@ import {
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
-  createStickerValidation, createPollValidation, withoutValidation, handleChangeValidation,
+  createStickerValidation,
+  createPollValidation,
+  withoutValidation,
+  handleChangeValidation,
+  antilinksValidation,
 } from '../controllers/validationsController';
 
 export const regularUserCommands = [
@@ -69,11 +73,12 @@ export const adminCommands = [
   },
   {
     name: '/antilinks',
-    description: 'Activa el baneo automático cuando alguien manda un link',
+    description: 'Activa/Desactiva el baneo automático cuando alguien manda un link',
+    optionsStr: '[on|off]',
     price: 0,
     minRole: RoleEnum.ADMIN,
     apply: activeAntiLinks,
-    validate: withoutValidation,
+    validate: antilinksValidation,
   },
 ];
 
