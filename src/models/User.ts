@@ -6,16 +6,21 @@ import { isCreator } from '../utils/rols';
 type UserRole = object & { globalRole?: RoleEnum }
 
 class User {
+  active: boolean;
+
   id: string;
 
   coins: number;
 
   role: UserRole;
 
-  constructor({ id, coins = 0, role = { } }) {
+  constructor({
+    id, coins = 0, role = { }, active = true,
+  }) {
     this.id = id;
     this.coins = coins;
     this.role = role;
+    this.active = active;
   }
 
   getCoins() {
@@ -34,6 +39,11 @@ class User {
     return menuMessage(role);
   }
 
+  getGroupIds() {
+    const groupIds = Object.keys(this.role).filter((key) => key !== 'globalRole');
+    return groupIds;
+  }
+
   addCoins(coins) {
     this.coins += coins;
   }
@@ -48,6 +58,10 @@ class User {
 
   setRole(role) {
     this.role = role;
+  }
+
+  setActive(isActive: boolean) {
+    this.active = isActive;
   }
 }
 

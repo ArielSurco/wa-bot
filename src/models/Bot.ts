@@ -1,9 +1,11 @@
 // External deps
+import Pino from 'pino';
 import makeWASocket, {
   AnyMessageContent,
   GroupMetadata,
   MessageRelayOptions,
   MiscMessageGenerationOptions,
+  ParticipantAction,
   proto,
   useMultiFileAuthState,
   WAMessage,
@@ -27,6 +29,8 @@ import { isGroup } from '../utils/messageUtils';
 import { defaultUsers } from '../constants/constants';
 import { groupParticipantsUpdate } from '../controllers/groupController';
 import { groupActions } from '../constants/groupActions';
+
+const logger = Pino({ level: 'error' });
 
 class Bot {
   users: Array<User>;
@@ -55,6 +59,7 @@ class Bot {
       syncFullHistory: false,
       printQRInTerminal: true,
       auth: state,
+      logger,
       getMessage: handler.messageRetryHandler,
     });
 
@@ -149,6 +154,36 @@ class Bot {
 
   relayMessage(chatId: string, message: proto.IMessage, options: MessageRelayOptions) {
     return this.sock.relayMessage(chatId, message, options);
+  }
+
+  async groupParticipantsUpdate(
+    updateType: ParticipantAction,
+    groupId: string,
+    usersToUpdateIds: string[],
+    banMessage?: string,
+  ) {
+    await this.sock.groupParticipantsUpdate(groupId, usersToUpdateIds, updateType);
+
+    if (updateType === 'remove') {
+      if (banMessage) {
+        await Promise.all(
+          usersToUpdateIds.map((userId) => this.sock.sendMessage(userId, { text: banMessage }, {})),
+        );
+      }
+
+      const group = this.getGroup(groupId);
+      const newParticipants = group
+        .getParticipants()
+        .filter((participantId) => !usersToUpdateIds.includes(participantId));
+      group.setParticipants(newParticipants);
+
+      this.getUsers().forEach((user) => {
+        const userOnlyHasOneGroup = user.getGroupIds().length === 1;
+        if (usersToUpdateIds.includes(user.id) && userOnlyHasOneGroup) {
+          user.setActive(false);
+        }
+      });
+    }
   }
 }
 

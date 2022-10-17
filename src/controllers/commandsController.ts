@@ -4,7 +4,14 @@ import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticke
 // Internal deps
 import { generateMessageID } from '@adiwajshing/baileys';
 import {
-  getMedia, getMessageText, hasMediaForSticker, isGroup, videoToSticker, getQuotedMessage,
+  getMedia,
+  getMessageText,
+  hasMediaForSticker,
+  isGroup,
+  videoToSticker,
+  getQuotedMessage,
+  getMentions,
+  getQuotedAuthor,
 } from '../utils/messageUtils';
 import { CommandParamsInterface } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
@@ -171,4 +178,21 @@ export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
   default:
     break;
   }
+};
+
+export const banUsers = async ({ bot, msg }: CommandParamsInterface) => {
+  const [, ...rest] = getMessageText(msg).split(' ');
+  const banMessage = rest.filter((word) => !word.startsWith('@')).join(' ')?.trim();
+  const mentions = getMentions(msg);
+  const authorQuotedMsg = getQuotedAuthor(msg);
+  const usersToBanIds = authorQuotedMsg ? [...mentions, authorQuotedMsg] : mentions;
+  await bot.groupParticipantsUpdate('remove', msg.key.remoteJid, usersToBanIds, banMessage);
+  await Promise.all(
+    usersToBanIds.map((userId) => bot.sendMessage(userId, { text: banMessage }, {})),
+  );
+};
+
+export const unbanUser = ({ bot, msg }: CommandParamsInterface) => {
+  const authorQuotedMsg = getQuotedAuthor(msg);
+  bot.groupParticipantsUpdate('add', msg.key.remoteJid, [authorQuotedMsg]);
 };

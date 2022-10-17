@@ -9,6 +9,8 @@ import {
   activeAntiLinks,
   sendMenu,
   handleChange,
+  banUsers,
+  unbanUser,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -17,6 +19,8 @@ import {
   withoutValidation,
   handleChangeValidation,
   antilinksValidation,
+  banUsersValidation,
+  unbanUserValidation,
 } from '../controllers/validationsController';
 
 export const regularUserCommands = [
@@ -56,12 +60,20 @@ export const regularUserCommands = [
 
 export const adminCommands = [
   {
-    name: '/poll',
-    description: 'Crea una encuesta',
+    name: '/ban',
+    description: 'Banea a los usuarios indicados',
     price: 0,
     minRole: RoleEnum.ADMIN,
-    apply: createPoll,
-    validate: createPollValidation,
+    apply: banUsers,
+    validate: banUsersValidation,
+  },
+  {
+    name: '/unban',
+    description: 'Agrega al usuario del mensaje que se indique, si no está en el grupo',
+    price: 0,
+    minRole: RoleEnum.ADMIN,
+    apply: unbanUser,
+    validate: unbanUserValidation,
   },
   {
     name: '/welcome on',
@@ -79,6 +91,14 @@ export const adminCommands = [
     minRole: RoleEnum.ADMIN,
     apply: activeAntiLinks,
     validate: antilinksValidation,
+  },
+  {
+    name: '/poll',
+    description: 'Crea una encuesta',
+    price: 0,
+    minRole: RoleEnum.ADMIN,
+    apply: createPoll,
+    validate: createPollValidation,
   },
 ];
 

@@ -1,6 +1,7 @@
 import { GroupActionEnum } from '../constants/enums';
 import { CommandParamsInterface } from '../constants/interfaces';
 import {
+  getMentions,
   getMessageText, getQuotedMessage, hasMediaForSticker, isGroup,
 } from '../utils/messageUtils';
 
@@ -145,5 +146,42 @@ export const handleChangeValidation = ({ bot, msg }: CommandParamsInterface) => 
     bot.sendMessage(msg.key.remoteJid, { text: 'No se reconoce el atributo a cambiar' }, { quoted: msg });
     return false;
   }
+  return true;
+};
+
+export const banUsersValidation = ({ bot, msg }: CommandParamsInterface) => {
+  const hasMentions = !!getMentions(msg).length;
+  const hasQuotedAuthor = !!msg.message.extendedTextMessage?.contextInfo?.participant;
+
+  if (!isGroup(msg.key.remoteJid)) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
+    return false;
+  }
+  if (!hasMentions && !hasQuotedAuthor) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes mencionar a los usuarios a banear, o responder el mensaje del usuario que quieres banear.' }, { quoted: msg });
+    return false;
+  }
+  return true;
+};
+
+export const unbanUserValidation = ({ bot, msg }: CommandParamsInterface) => {
+  if (!isGroup(msg.key.remoteJid)) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
+    return false;
+  }
+  if (!getQuotedMessage(msg)) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes responder el mensaje del usuario que quieres desbanear.' }, { quoted: msg });
+    return false;
+  }
+
+  const userIsParticipantOfGroup = bot
+    .getGroup(msg.key.remoteJid)
+    ?.getParticipants()
+    .includes(msg.message.extendedTextMessage?.contextInfo?.participant);
+  if (userIsParticipantOfGroup) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'El usuario ya está en el grupo.' }, { quoted: msg });
+    return false;
+  }
+
   return true;
 };

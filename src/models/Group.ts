@@ -63,6 +63,10 @@ class Group {
     return this.participants;
   }
 
+  setParticipants(newParticipants: Array<string>) {
+    this.participants = newParticipants;
+  }
+
   getGroupActions() {
     return this.groupActions;
   }

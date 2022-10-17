@@ -12,8 +12,12 @@ export const receiveMsg = async (bot: Bot, msg: WAMessage) => {
   const msgText = getMessageText(msg);
   const user = await bot.getMessageUser(msg);
   const command = Command.getCommand(bot.getCommands(), msgText);
+  const cantUseBotInGroup = user
+    && !isCreator(user.id)
+    && !bot.getGroup(msg.key.remoteJid)?.isActive();
+  const isUserInactive = user && !user.active;
 
-  if (!user || (!isCreator(user.id) && !bot.getGroup(msg.key.remoteJid)?.isActive())) {
+  if (!user || cantUseBotInGroup || isUserInactive) {
     const responseText = isGroup(msg.key.remoteJid)
       ? 'No se puede utilizar el bot en este grupo. El creador debe habilitar el bot en este grupo para que se pueda utilizar.'
       : 'No puedes utilizar el bot. Debes pertenecer a alguno de los grupos donde el bot está habilitado.';
