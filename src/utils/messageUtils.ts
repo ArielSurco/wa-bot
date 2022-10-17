@@ -10,15 +10,19 @@ import {
 import { tmpdir } from 'os';
 import { GroupActionEnum } from '../constants/enums';
 
-export const getMedia = async (msg) => {
-  const messageType = Object.keys(msg)[0];
-  const stream = await downloadContentFromMessage(msg[messageType], messageType.replace('Message', '') as MediaType);
-  let buffer = Buffer.from([]);
-  // eslint-disable-next-line no-restricted-syntax
-  for await (const chunk of stream) {
-    buffer = Buffer.concat([buffer, chunk]);
+export const getMedia = async (msg: proto.IMessage) => {
+  try {
+    const messageType = Object.keys(msg)[0];
+    const stream = await downloadContentFromMessage(msg[messageType], messageType.replace('Message', '') as MediaType);
+    let buffer = Buffer.from([]);
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const chunk of stream) {
+      buffer = Buffer.concat([buffer, chunk]);
+    }
+    return buffer;
+  } catch (err) {
+    throw new Error(err.message);
   }
-  return buffer;
 };
 
 export const videoToSticker = async (media) => {
