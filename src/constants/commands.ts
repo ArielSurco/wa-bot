@@ -4,7 +4,7 @@ import {
   sendStatus,
   sendCoins,
   createPoll,
-  groupInfo,
+  getInfo,
   activeWelcome,
   activeAntiLinks,
   sendMenu,
@@ -113,11 +113,11 @@ export const creatorCommands = [
     validate: handleChangeValidation,
   },
   {
-    name: '/g info',
-    description: 'Muestra informacion del grupo',
+    name: '/info',
+    description: 'Muestra la información solicitada',
     price: 0,
     minRole: RoleEnum.CREATOR,
-    apply: groupInfo,
+    apply: getInfo,
     validate: withoutValidation,
   },
 ];

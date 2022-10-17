@@ -12,6 +12,7 @@ import {
   getQuotedMessage,
   getMentions,
   getQuotedAuthor,
+  getGroupActionText,
 } from '../utils/messageUtils';
 import { CommandParamsInterface } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
@@ -19,22 +20,27 @@ import { GroupActionEnum } from '../constants/enums';
 import { setChatsController } from './chatsController';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
-  if (!bot || !msg) return;
-  const message = hasMediaForSticker(msg.message) ? msg.message : getQuotedMessage(msg);
-  let mediaData: Buffer = await getMedia(message);
-  const messageType = Object.keys(message)[0];
-  const mimetype = message[messageType]?.mimetype;
-  if (mimetype?.includes('video')) {
-    mediaData = await videoToSticker({ mimetype, buffer: mediaData });
+  try {
+    if (!bot || !msg) return;
+    const message = hasMediaForSticker(msg.message) ? msg.message : getQuotedMessage(msg);
+    let mediaData: Buffer = await getMedia(message);
+    const messageType = Object.keys(message)[0];
+    const mimetype = message[messageType]?.mimetype;
+    if (mimetype?.includes('video')) {
+      mediaData = await videoToSticker({ mimetype, buffer: mediaData });
+    }
+    const stickerOptions = {
+      pack: 'Kingdom Ecchi Bot',
+      author: 'Kingdom Ecchi Bot',
+      type: StickerTypes.FULL,
+      quality: 50,
+    };
+    const generateSticker = await createStickerFromMedia(mediaData, stickerOptions);
+    bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { });
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Error al crear el sticker' }, { quoted: msg });
+    bot.handleError(new Error(err));
   }
-  const stickerOptions = {
-    pack: 'Kingdom Ecchi Bot',
-    author: 'Kingdom Ecchi Bot',
-    type: StickerTypes.FULL,
-    quality: 50,
-  };
-  const generateSticker = await createStickerFromMedia(mediaData, stickerOptions);
-  bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { });
 };
 
 export const sendStatus = ({ bot, msg }: CommandParamsInterface) => {
@@ -81,10 +87,37 @@ export const getRole = async ({ bot, msg, user }: CommandParamsInterface) => {
   }
 };
 
-export const groupInfo = async ({ bot, msg }: CommandParamsInterface) => {
-  const group = bot.getGroup(msg.key.remoteJid);
-  const groupInfoText = `Participantes: ${group.participants.length}`;
-  bot.sendMessage(msg.key.remoteJid, { text: groupInfoText }, { quoted: msg });
+export const getInfo = async ({ bot, msg }: CommandParamsInterface) => {
+  const [, infoType] = getMessageText(msg).split(' ');
+
+  switch (infoType) {
+  case 'participant': {
+    const mentions = getMentions(msg);
+    const participants = mentions.map((mention) => bot.getUser(mention));
+    const participantsInfo = participants.map((participant) => {
+      const {
+        id, coins, role, active,
+      } = participant;
+      const infoText = `User ID: ${id}\nActive: ${active}\nRole: ${getRoleText(role[msg.key.remoteJid])}\nCoins: ${coins}`;
+      return infoText;
+    });
+    await Promise.all(
+      participantsInfo
+        .map((info) => bot.sendMessage(msg.key.remoteJid, { text: info }, { quoted: msg })),
+    );
+    return;
+  }
+  case 'group': {
+    const group = bot.getGroup(msg.key.remoteJid);
+    const groupParticipants = group.getParticipants();
+    const groupActionsText = group.getGroupActions().map((groupAction) => getGroupActionText(groupAction)).join(', ');
+    const groupInfo = `Group ID: ${group.id}\nActive: ${group.active}\nPrivate: ${group.private}\nParticipants: ${groupParticipants.length}\nGroup Actions: ${groupActionsText}`;
+    bot.sendMessage(msg.key.remoteJid, { text: groupInfo }, { quoted: msg });
+    break;
+  }
+  default:
+    break;
+  }
 };
 
 export const activeWelcome = ({ bot, msg }: CommandParamsInterface) => {

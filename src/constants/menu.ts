@@ -13,7 +13,7 @@ export const regularUserMenu = {
 export const adminMenu = {
   title: 'Comandos para ADMINS',
   rows: adminCommands.map((command) => ({
-    title: command.name,
+    title: `${command.name} ${command.optionsStr || ''}`,
     description: command.description,
   })),
 };

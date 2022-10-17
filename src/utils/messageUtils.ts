@@ -8,6 +8,7 @@ import {
   downloadContentFromMessage, MediaType, proto, WAMessage,
 } from '@adiwajshing/baileys';
 import { tmpdir } from 'os';
+import { GroupActionEnum } from '../constants/enums';
 
 export const getMedia = async (msg) => {
   const messageType = Object.keys(msg)[0];
@@ -96,3 +97,5 @@ export const getMentions = (msg: WAMessage) => msg.message?.extendedTextMessage?
 
 // eslint-disable-next-line max-len
 export const getQuotedAuthor = (msg: WAMessage) => msg.message?.extendedTextMessage?.contextInfo?.participant;
+
+export const getGroupActionText = (groupAction: GroupActionEnum) => GroupActionEnum[groupAction];
