@@ -30,7 +30,7 @@ import { defaultUsers } from '../constants/constants';
 import { groupParticipantsUpdate } from '../controllers/groupController';
 import { groupActions } from '../constants/groupActions';
 
-const logger = Pino({ level: 'error' });
+const logger = Pino({ level: 'fatal' });
 
 class Bot {
   users: Array<User>;
@@ -75,9 +75,13 @@ class Bot {
 
     sock.ev.on('group-participants.update', (update) => groupParticipantsUpdate(this, update));
 
-    sock.ev.on('messages.upsert', ({ messages, type }) => {
-      if (type === 'notify') {
-        messages.forEach((msg) => receiveMsg(this, msg));
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      try {
+        if (type === 'notify') {
+          await Promise.all(messages.map((msg) => receiveMsg(this, msg)));
+        }
+      } catch (err) {
+        this.handleError(new Error(err));
       }
     });
 
@@ -154,6 +158,10 @@ class Bot {
 
   relayMessage(chatId: string, message: proto.IMessage, options: MessageRelayOptions) {
     return this.sock.relayMessage(chatId, message, options);
+  }
+
+  handleError(err: Error) {
+    this.sock.sendMessage('5491135181650@s.whatsapp.net', { text: err.message }, {});
   }
 
   async groupParticipantsUpdate(

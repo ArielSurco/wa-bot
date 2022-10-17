@@ -15,7 +15,7 @@ export const receiveMsg = async (bot: Bot, msg: WAMessage) => {
   const cantUseBotInGroup = user
     && !isCreator(user.id)
     && !bot.getGroup(msg.key.remoteJid)?.isActive();
-  const isUserInactive = user && !user.active;
+  const isUserInactive = user && !user.active && !isGroup(msg.key.remoteJid);
 
   if (!user || cantUseBotInGroup || isUserInactive) {
     const responseText = isGroup(msg.key.remoteJid)

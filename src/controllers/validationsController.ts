@@ -122,12 +122,14 @@ export const handleChangeValidation = ({ bot, msg }: CommandParamsInterface) => 
       return false;
     }
     switch (changeGroupOption) {
-    case 'add':
-      if (bot.getGroup(msg.key.remoteJid)) {
+    case 'add': {
+      const group = bot.getGroup(msg.key.remoteJid);
+      if (group && group.isActive()) {
         bot.sendMessage(msg.key.remoteJid, { text: 'El grupo ya está agregado' }, { quoted: msg });
         return false;
       }
       break;
+    }
     case 'remove': {
       const group = bot.getGroup(msg.key.remoteJid);
       if (!group || !group.isActive()) {
