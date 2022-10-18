@@ -23,21 +23,26 @@ export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
     if (!bot || !msg) return;
     const message = hasMediaForSticker(msg.message) ? msg.message : getQuotedMessage(msg);
-    let mediaData: Buffer = await getMedia(message);
+    let mediaData: Buffer;
     const messageType = Object.keys(message)[0];
     const mimetype = message[messageType]?.mimetype;
-    if (mimetype?.includes('video')) {
+    const groupName = isGroup(msg.key.remoteJid) ? bot.getGroup(msg.key.remoteJid).name : '';
+    if (mimetype?.includes('image')) {
+      mediaData = await getMedia(message);
+    }
+    if (mimetype?.includes('video') || mimetype?.includes('gif')) {
       mediaData = await videoToSticker({ mimetype, buffer: mediaData });
     }
+    const author = groupName ? `BOT - ${groupName}` : 'BOT';
     const stickerOptions = {
-      pack: 'Kingdom Ecchi Bot',
-      author: 'Kingdom Ecchi Bot',
+      author,
       type: StickerTypes.FULL,
       quality: 50,
     };
     const generateSticker = await createStickerFromMedia(mediaData, stickerOptions);
-    bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { });
+    await bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { });
   } catch (err) {
+    console.log('ERROR', err.message);
     bot.sendMessage(msg.key.remoteJid, { text: 'Error al crear el sticker' }, { quoted: msg });
     bot.handleError(new Error(err));
   }
