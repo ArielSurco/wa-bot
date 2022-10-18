@@ -23,13 +23,10 @@ export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
     if (!bot || !msg) return;
     const message = hasMediaForSticker(msg.message) ? msg.message : getQuotedMessage(msg);
-    let mediaData: Buffer;
+    let mediaData: Buffer = await getMedia(message);
     const messageType = Object.keys(message)[0];
     const mimetype = message[messageType]?.mimetype;
-    const groupName = isGroup(msg.key.remoteJid) ? bot.getGroup(msg.key.remoteJid).name : '';
-    if (mimetype?.includes('image')) {
-      mediaData = await getMedia(message);
-    }
+    const groupName = isGroup(msg.key.remoteJid) ? bot.getGroup(msg.key.remoteJid)?.name : '';
     if (mimetype?.includes('video') || mimetype?.includes('gif')) {
       mediaData = await videoToSticker({ mimetype, buffer: mediaData });
     }
