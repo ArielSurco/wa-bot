@@ -51,7 +51,7 @@ export const regularUserCommands = [
   {
     name: '/st',
     description: 'Crea un sticker a partir de una imagen, gif o video',
-    price: 5,
+    price: 0,
     minRole: RoleEnum.REGULAR,
     apply: createSticker,
     validate: createStickerValidation,
