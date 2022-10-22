@@ -57,7 +57,7 @@ export const videoToSticker = async (media) => {
           '-ss',
           '00:00:00.0',
           '-t',
-          '00:00:10.0',
+          '00:00:05.0',
           '-preset',
           'default',
           '-an',
