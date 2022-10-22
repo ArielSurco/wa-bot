@@ -13,6 +13,7 @@ import {
   getMentions,
   getQuotedAuthor,
   getGroupActionText,
+  getMessage,
 } from '../utils/messageUtils';
 import { CommandParamsInterface } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
@@ -21,8 +22,8 @@ import { setChatsController } from './chatsController';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
-    if (!bot || !msg) return;
-    const message = hasMediaForSticker(msg.message) ? msg.message : getQuotedMessage(msg);
+    const auxMsg = getMessage(msg);
+    const message = hasMediaForSticker(auxMsg) ? auxMsg : getQuotedMessage(auxMsg);
     let mediaData: Buffer = await getMedia(message);
     const messageType = Object.keys(message)[0];
     const mimetype = message[messageType]?.mimetype;
@@ -37,11 +38,10 @@ export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
       quality: 50,
     };
     const generateSticker = await createStickerFromMedia(mediaData, stickerOptions);
-    await bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker }, { });
+    await bot.sendMessage(msg.key.remoteJid, { sticker: generateSticker });
   } catch (err) {
-    console.log('ERROR', err.message);
-    bot.sendMessage(msg.key.remoteJid, { text: 'Error al crear el sticker' }, { quoted: msg });
-    bot.handleError(new Error(err));
+    bot.sendMessage(msg.key.remoteJid, { text: 'Error al crear el sticker, intente nuevamente' }, { quoted: msg });
+    bot.handleError(err.message);
   }
 };
 
@@ -54,7 +54,7 @@ export const sendCoins = ({ bot, msg, user }: CommandParamsInterface) => {
 };
 
 export const createPoll = async ({ bot, msg }: CommandParamsInterface) => {
-  const msgText = getMessageText(msg);
+  const msgText = getMessageText(msg.message);
   const [pollTitle, ...rest] = msgText
     .split(' ')
     .slice(1)
@@ -90,7 +90,7 @@ export const getRole = async ({ bot, msg, user }: CommandParamsInterface) => {
 };
 
 export const getInfo = async ({ bot, msg }: CommandParamsInterface) => {
-  const [, infoType] = getMessageText(msg).split(' ');
+  const [, infoType] = getMessageText(msg.message).split(' ');
 
   switch (infoType) {
   case 'participant': {
@@ -130,7 +130,7 @@ export const activeWelcome = ({ bot, msg }: CommandParamsInterface) => {
 };
 
 export const activeAntiLinks = ({ bot, msg }: CommandParamsInterface) => {
-  const [, ...rest] = getMessageText(msg).split(' ');
+  const [, ...rest] = getMessageText(msg.message).split(' ');
   const option = rest[0].toLowerCase();
   const groupId = msg.key.remoteJid;
   const group = bot.getGroup(groupId);
@@ -151,7 +151,7 @@ export const sendMenu = async ({ bot, msg, user }: CommandParamsInterface) => {
 };
 
 export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
-  const msgText = getMessageText(msg);
+  const msgText = getMessageText(msg.message);
   const [, ...rest] = msgText.split(' ');
   const typeChange = rest[0];
 
@@ -216,14 +216,14 @@ export const handleChange = async ({ bot, msg }: CommandParamsInterface) => {
 };
 
 export const banUsers = async ({ bot, msg }: CommandParamsInterface) => {
-  const [, ...rest] = getMessageText(msg).split(' ');
+  const [, ...rest] = getMessageText(msg.message).split(' ');
   const banMessage = rest.filter((word) => !word.startsWith('@')).join(' ')?.trim();
   const mentions = getMentions(msg);
   const authorQuotedMsg = getQuotedAuthor(msg);
   const usersToBanIds = authorQuotedMsg ? [...mentions, authorQuotedMsg] : mentions;
   await bot.groupParticipantsUpdate('remove', msg.key.remoteJid, usersToBanIds, banMessage);
   await Promise.all(
-    usersToBanIds.map((userId) => bot.sendMessage(userId, { text: banMessage }, {})),
+    usersToBanIds.map((userId) => bot.sendMessage(userId, { text: banMessage })),
   );
 };
 

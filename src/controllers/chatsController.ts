@@ -79,10 +79,10 @@ export const setChatsController = async (bot: Bot, chats: ChatParam[], manualCal
     bot.setGroups(botGroups);
 
     // Show new participants and groups added
-    console.log('New participants added', newParticipantsAdded);
-    console.log('New groups added', newGroupsAdded);
+    // eslint-disable-next-line no-console
+    console.log('New participants added', newParticipantsAdded, 'New groups added', newGroupsAdded);
   } catch (err) {
-    console.log(err?.message);
+    bot.handleError(err.message);
   }
 };
 

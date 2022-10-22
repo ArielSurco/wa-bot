@@ -2,20 +2,22 @@ import { GroupActionEnum } from '../constants/enums';
 import { CommandParamsInterface } from '../constants/interfaces';
 import {
   getMentions,
+  getMessage,
   getMessageText, getQuotedMessage, hasMediaForSticker, isGroup,
 } from '../utils/messageUtils';
 
 export const withoutValidation = () => true;
 
 export const createStickerValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
-  const quotedMessage = getQuotedMessage(msg);
-  if (hasMediaForSticker(msg.message) || hasMediaForSticker(quotedMessage)) return true;
-  bot?.getSock().sendMessage(msg?.key.remoteJid, { text: 'Debes indicar alguna imagen, gif o video' }, { quoted: msg });
+  const auxMsg = getMessage(msg);
+  const quotedMessage = getQuotedMessage(auxMsg);
+  if (hasMediaForSticker(auxMsg) || hasMediaForSticker(quotedMessage)) return true;
+  bot.getSock().sendMessage(msg?.key.remoteJid, { text: 'Debes indicar alguna imagen, gif o video' }, { quoted: msg });
   return false;
 };
 
 export const createPollValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
-  const msgText = getMessageText(msg);
+  const msgText = getMessageText(msg.message);
   const [pollTitle, ...rest] = msgText
     .split(' ')
     .slice(1)
@@ -42,7 +44,7 @@ export const antilinksValidation = ({ bot, msg }: CommandParamsInterface): boole
     return false;
   }
 
-  const [, ...rest] = getMessageText(msg).split(' ');
+  const [, ...rest] = getMessageText(msg.message).split(' ');
   const hasOption = !rest.length || !rest[0];
   const optionsAvailable = ['on', 'off'];
   const option = hasOption ? rest[0].toLowerCase() : '';
@@ -74,7 +76,7 @@ export const antilinksValidation = ({ bot, msg }: CommandParamsInterface): boole
 };
 
 export const handleChangeValidation = ({ bot, msg }: CommandParamsInterface) => {
-  const msgText = getMessageText(msg);
+  const msgText = getMessageText(msg.message);
   const [, ...rest] = msgText.split(' ');
   const typeChange = rest[0];
   const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid;
@@ -171,7 +173,7 @@ export const unbanUserValidation = ({ bot, msg }: CommandParamsInterface) => {
     bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
     return false;
   }
-  if (!getQuotedMessage(msg)) {
+  if (!getQuotedMessage(msg.message)) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes responder el mensaje del usuario que quieres desbanear.' }, { quoted: msg });
     return false;
   }

@@ -6,18 +6,15 @@ import Bot from '../models/Bot';
 import Command from '../models/Command';
 import { getMessageText, isGroup } from '../utils/messageUtils';
 import { GroupActionType } from '../constants/enums';
-import { isCreator } from '../utils/rols';
 
 export const receiveMsg = async (bot: Bot, msg: WAMessage) => {
-  const msgText = getMessageText(msg);
+  const msgText = getMessageText(msg.message);
   const user = await bot.getMessageUser(msg);
   const command = Command.getCommand(bot.getCommands(), msgText);
-  const cantUseBotInGroup = user
-    && !isCreator(user.id)
-    && !bot.getGroup(msg.key.remoteJid)?.isActive();
-  const isUserInactive = user && !user.active && !isGroup(msg.key.remoteJid);
+  const group = bot.getGroup(msg.key.remoteJid);
+  const cantUseBot = !user || (group && !group.isActive());
 
-  if (!user || cantUseBotInGroup || isUserInactive) {
+  if (cantUseBot) {
     const responseText = isGroup(msg.key.remoteJid)
       ? 'No se puede utilizar el bot en este grupo. El creador debe habilitar el bot en este grupo para que se pueda utilizar.'
       : 'No puedes utilizar el bot. Debes pertenecer a alguno de los grupos donde el bot está habilitado.';
@@ -27,17 +24,14 @@ export const receiveMsg = async (bot: Bot, msg: WAMessage) => {
 
   if (!command) user.addCoins(1);
 
-  if (isGroup(msg.key.remoteJid)) {
-    const group = bot.getGroup(msg.key.remoteJid);
-    if (group) {
-      const groupActions = group.getGroupActions();
-      const actions = bot.getActions(GroupActionType.MESSAGE, groupActions);
-      await Promise.all(
-        actions.map((action) => action.evaluate({
-          bot, user, msg,
-        })),
-      );
-    }
+  if (group) {
+    const groupActions = group.getGroupActions();
+    const actions = bot.getActions(GroupActionType.MESSAGE, groupActions);
+    await Promise.all(
+      actions.map((action) => action.evaluate({
+        bot, user, msg,
+      })),
+    );
   }
 
   if (!command) return;

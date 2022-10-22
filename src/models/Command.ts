@@ -40,7 +40,7 @@ class Command {
     this.validate = validate;
   }
 
-  use({ bot, msg, user }: CommandParamsInterface) {
+  async use({ bot, msg, user }: CommandParamsInterface) {
     try {
       const role = getUserRole(user, msg);
       if (role < this.minRole) {
@@ -56,10 +56,11 @@ class Command {
         return;
       }
       if (!this.validate({ bot, msg, user })) return;
+      await this.execute({ bot, msg, user });
       user.subtractCoins(this.price);
-      this.execute({ bot, msg, user });
     } catch (err) {
       bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando' }, { quoted: msg });
+      bot.handleError(err.message);
     }
   }
 

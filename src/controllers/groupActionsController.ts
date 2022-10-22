@@ -25,18 +25,22 @@ export const welcomeAction = async ({
         {},
       );
     } catch (_) {
-      bot.sendMessage(group.id, { text: welcomeText, mentions: [userId] }, {});
+      bot.sendMessage(group.id, { text: welcomeText, mentions: [userId] });
     }
   }
 };
 
 // Message group actions
 export const antiLinkAction = async ({ bot, user, msg }: CommandParamsInterface) => {
-  const msgText = getMessageText(msg);
-  if (isLink(msgText)) {
-    const sock = bot.getSock();
-    await sock.sendMessage(msg.key.remoteJid, { text: 'Está prohibido mandar links, serás baneado' }, {});
-    await sock.sendMessage(msg.key.remoteJid, { delete: msg.key }, {});
-    await sock.groupParticipantsUpdate(msg.key.remoteJid, [user.id], 'remove');
+  try {
+    const msgText = getMessageText(msg.message);
+    if (isLink(msgText)) {
+      const sock = bot.getSock();
+      await sock.sendMessage(msg.key.remoteJid, { text: 'Está prohibido mandar links, serás baneado' });
+      await sock.sendMessage(msg.key.remoteJid, { delete: msg.key });
+      await sock.groupParticipantsUpdate(msg.key.remoteJid, [user.id], 'remove');
+    }
+  } catch (err) {
+    throw new Error(err.message);
   }
 };

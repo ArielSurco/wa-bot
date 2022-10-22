@@ -1,5 +1,6 @@
 // External deps
 import Pino from 'pino';
+import dotenv from 'dotenv';
 import makeWASocket, {
   AnyMessageContent,
   GroupMetadata,
@@ -20,7 +21,7 @@ import Group from './Group';
 import GroupAction from './GroupAction';
 import { connectionUpdate } from '../controllers/connectionController';
 import { getData, setData } from '../utils/files';
-import { getRol } from '../utils/rols';
+import { getRol, isCreator } from '../utils/rols';
 import { setChatsController } from '../controllers/chatsController';
 import { receiveMsg } from '../controllers/messageController';
 import { commands } from '../constants/commands';
@@ -30,6 +31,7 @@ import { defaultUsers } from '../constants/constants';
 import { groupParticipantsUpdate } from '../controllers/groupController';
 import { groupActions } from '../constants/groupActions';
 
+dotenv.config();
 const logger = Pino({ level: 'fatal' });
 
 class Bot {
@@ -81,7 +83,7 @@ class Bot {
           await Promise.all(messages.map((msg) => receiveMsg(this, msg)));
         }
       } catch (err) {
-        this.handleError(new Error(err));
+        this.handleError(err.message);
       }
     });
 
@@ -124,22 +126,29 @@ class Bot {
   }
 
   async getMessageUser(msg: WAMessage) {
-    let user = isGroup(msg.key.remoteJid)
-      ? this.getUser(msg.key.participant)
-      : this.getUser(msg.key.remoteJid);
-    if (!user && isGroup(msg.key.remoteJid) && this.getGroup(msg.key.remoteJid)) {
-      const groupId = msg.key.remoteJid;
-      const groupMetadata: GroupMetadata = await this.sock.groupMetadata(groupId);
-      const participant = groupMetadata.participants
-        .find((p) => p.id === msg.key.participant);
-      const role = getRol(participant.admin);
-      const newUser = new User({
-        id: msg.key.participant, role: { [groupId]: role },
-      });
-      user = newUser;
-      this.setUsers([...this.getUsers(), newUser]);
+    try {
+      let user = isGroup(msg.key.remoteJid)
+        ? this.getUser(msg.key.participant)
+        : this.getUser(msg.key.remoteJid);
+
+      if (user && !user.active && !isCreator(user.id)) return null;
+      if (!user && isGroup(msg.key.remoteJid) && this.getGroup(msg.key.remoteJid)?.isActive()) {
+        const groupId = msg.key.remoteJid;
+        const groupMetadata: GroupMetadata = await this.sock.groupMetadata(groupId);
+        const participant = groupMetadata.participants
+          .find((p) => p.id === msg.key.participant);
+        const role = getRol(participant.admin);
+        const newUser = new User({
+          id: msg.key.participant, role: { [groupId]: role },
+        });
+        user = newUser;
+        this.setUsers([...this.getUsers(), newUser]);
+      }
+      return user;
+    } catch (err) {
+      this.handleError(err.message);
+      return null;
     }
-    return user;
   }
 
   setUsers(users: Array<User>) {
@@ -152,7 +161,7 @@ class Bot {
     setData('groups', groups);
   }
 
-  sendMessage(chatId: string, message: AnyMessageContent, options: MiscMessageGenerationOptions) {
+  sendMessage(chatId: string, message: AnyMessageContent, options?: MiscMessageGenerationOptions) {
     return this.sock.sendMessage(chatId, message, options);
   }
 
@@ -160,8 +169,8 @@ class Bot {
     return this.sock.relayMessage(chatId, message, options);
   }
 
-  handleError(err: Error) {
-    this.sock.sendMessage('5491135181650@s.whatsapp.net', { text: err.message }, {});
+  handleError(errMessage: string) {
+    this.sock.sendMessage(process.env.CREATOR_ID, { text: errMessage });
   }
 
   async groupParticipantsUpdate(
@@ -175,7 +184,7 @@ class Bot {
     if (updateType === 'remove') {
       if (banMessage) {
         await Promise.all(
-          usersToUpdateIds.map((userId) => this.sock.sendMessage(userId, { text: banMessage }, {})),
+          usersToUpdateIds.map((userId) => this.sock.sendMessage(userId, { text: banMessage })),
         );
       }
 
@@ -189,6 +198,17 @@ class Bot {
         const userOnlyHasOneGroup = user.getGroupIds().length === 1;
         if (usersToUpdateIds.includes(user.id) && userOnlyHasOneGroup) {
           user.setActive(false);
+        }
+      });
+    }
+    if (updateType === 'add') {
+      const group = this.getGroup(groupId);
+      const newParticipants = [...group.getParticipants(), ...usersToUpdateIds];
+      group.setParticipants(newParticipants);
+
+      this.getUsers().forEach((user) => {
+        if (usersToUpdateIds.includes(user.id) && !user.active) {
+          user.setActive(true);
         }
       });
     }
