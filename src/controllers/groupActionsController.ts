@@ -22,7 +22,6 @@ export const welcomeAction = async ({
       bot.sendMessage(
         group.id,
         { caption: welcomeText, image: { url: profilePic }, mentions: [userId] },
-        {},
       );
     } catch (_) {
       bot.sendMessage(group.id, { text: welcomeText, mentions: [userId] });

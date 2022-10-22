@@ -11,6 +11,7 @@ import {
   handleChange,
   banUsers,
   unbanUser,
+  createFakeImg,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -21,6 +22,7 @@ import {
   antilinksValidation,
   banUsersValidation,
   unbanUserValidation,
+  createFakeImgValidation,
 } from '../controllers/validationsController';
 
 export const regularUserCommands = [
@@ -55,6 +57,15 @@ export const regularUserCommands = [
     minRole: RoleEnum.REGULAR,
     apply: createSticker,
     validate: createStickerValidation,
+  },
+  {
+    name: '/fake',
+    description: 'Crea una imagen con vista previa falsa. La imagen que envies será la vista previa de la imagen que respondas. Opcionalmente puedes agregar -r para que la imagen que respondas sea la vista previa',
+    optionsStr: '[-r]',
+    price: 10,
+    minRole: RoleEnum.REGULAR,
+    apply: createFakeImg,
+    validate: createFakeImgValidation,
   },
 ];
 

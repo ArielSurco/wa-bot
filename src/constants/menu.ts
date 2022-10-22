@@ -5,7 +5,7 @@ import { RoleEnum } from './enums';
 export const regularUserMenu = {
   title: 'Comandos para MIEMBROS',
   rows: regularUserCommands.map((command) => ({
-    title: command.name,
+    title: `${command.name} ${command.optionsStr || ''}`,
     description: `${command.price ? `Precio: ${command.price} coins. ` : ''}${command.description}`,
   })),
 };

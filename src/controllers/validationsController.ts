@@ -9,7 +9,7 @@ import {
 export const withoutValidation = () => true;
 
 export const createStickerValidation = ({ bot, msg }: CommandParamsInterface): boolean => {
-  const auxMsg = getMessage(msg);
+  const auxMsg = getMessage(msg.message);
   const quotedMessage = getQuotedMessage(auxMsg);
   if (hasMediaForSticker(auxMsg) || hasMediaForSticker(quotedMessage)) return true;
   bot.getSock().sendMessage(msg?.key.remoteJid, { text: 'Debes indicar alguna imagen, gif o video' }, { quoted: msg });
@@ -187,5 +187,19 @@ export const unbanUserValidation = ({ bot, msg }: CommandParamsInterface) => {
     return false;
   }
 
+  return true;
+};
+
+export const createFakeImgValidation = ({ bot, msg }: CommandParamsInterface) => {
+  const message = getMessage(msg.message);
+  const quotedMessage = getQuotedMessage(msg.message);
+  if (!message.imageMessage) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes adjuntar la imagen que quieres poner como vista previa' }, { quoted: msg });
+    return false;
+  }
+  if (!quotedMessage.imageMessage) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes responder a la imagen que quieres poner como original' }, { quoted: msg });
+    return false;
+  }
   return true;
 };

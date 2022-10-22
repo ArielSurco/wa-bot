@@ -78,9 +78,9 @@ export const videoToSticker = async (media) => {
   }
 };
 
-export const getMessage = (msg: WAMessage) => msg.message.viewOnceMessage?.message
-  || msg.message.viewOnceMessageV2?.message
-  || msg.message;
+export const getMessage = (msg: proto.IMessage) => msg.viewOnceMessage?.message
+  || msg.viewOnceMessageV2?.message
+  || msg;
 
 export const getMessageText = (msg: proto.IMessage) => msg?.conversation
   || msg?.imageMessage?.caption
@@ -91,7 +91,10 @@ export const getMessageText = (msg: proto.IMessage) => msg?.conversation
   || '';
 
 export const getQuotedMessage = (msg: proto.IMessage) => {
-  const quotedMessage = msg?.extendedTextMessage?.contextInfo?.quotedMessage;
+  const auxMessage = getMessage(msg);
+  const typeMessage = Object.keys(auxMessage)[0];
+  const quotedMessage = auxMessage[typeMessage]?.contextInfo?.quotedMessage
+    || auxMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
   return quotedMessage || null;
 };
 

@@ -2,7 +2,7 @@
 import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticker-formatter';
 
 // Internal deps
-import { generateMessageID } from '@adiwajshing/baileys';
+import { extractImageThumb, generateMessageID } from '@adiwajshing/baileys';
 import {
   getMedia,
   getMessageText,
@@ -22,7 +22,7 @@ import { setChatsController } from './chatsController';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
-    const auxMsg = getMessage(msg);
+    const auxMsg = getMessage(msg.message);
     const message = hasMediaForSticker(auxMsg) ? auxMsg : getQuotedMessage(auxMsg);
     let mediaData: Buffer = await getMedia(message);
     const messageType = Object.keys(message)[0];
@@ -230,4 +230,26 @@ export const banUsers = async ({ bot, msg }: CommandParamsInterface) => {
 export const unbanUser = ({ bot, msg }: CommandParamsInterface) => {
   const authorQuotedMsg = getQuotedAuthor(msg);
   bot.groupParticipantsUpdate('add', msg.key.remoteJid, [authorQuotedMsg]);
+};
+
+export const createFakeImg = async ({ bot, msg }: CommandParamsInterface) => {
+  try {
+    const [, ...params] = getMessageText(msg.message).split(' ');
+    const message = getMessage(msg.message);
+    const quotedMessage = getQuotedMessage(msg.message);
+    let imageBuffer: Buffer;
+    let thumbnailMediaData: Buffer;
+    if (params[0]?.toLowerCase().startsWith('-r')) {
+      imageBuffer = await getMedia(message);
+      thumbnailMediaData = await getMedia(quotedMessage);
+    } else {
+      imageBuffer = await getMedia(quotedMessage);
+      thumbnailMediaData = await getMedia(message);
+    }
+    const thumbnailBuffer = await extractImageThumb(thumbnailMediaData);
+    bot.sendMessage(msg.key.remoteJid, { image: imageBuffer, jpegThumbnail: thumbnailBuffer.toString('base64') }, { quoted: msg });
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'No se pudo crear la imagen, intente nuevamente' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
 };
