@@ -49,7 +49,7 @@ export const sendStatus = ({ bot, msg }: CommandParamsInterface) => {
   bot.sendMessage(msg.key.remoteJid, { text: 'Online' }, { quoted: msg });
 };
 
-export const sendCoins = ({ bot, msg, user }: CommandParamsInterface) => {
+export const getCoins = ({ bot, msg, user }: CommandParamsInterface) => {
   bot.sendMessage(msg.key.remoteJid, { text: `Tienes ${user.getCoins()} coins` }, { quoted: msg });
 };
 
@@ -250,6 +250,21 @@ export const createFakeImg = async ({ bot, msg }: CommandParamsInterface) => {
     bot.sendMessage(msg.key.remoteJid, { image: imageBuffer, jpegThumbnail: thumbnailBuffer.toString('base64') }, { quoted: msg });
   } catch (err) {
     bot.sendMessage(msg.key.remoteJid, { text: 'No se pudo crear la imagen, intente nuevamente' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
+};
+
+export const sendCoins = async ({ bot, user: coinsSenderUser, msg }: CommandParamsInterface) => {
+  try {
+    const [, coins] = getMessageText(msg.message).split(' ');
+    const coinsReceiverUserId = getMentions(msg)[0];
+    const coinsToSend = Number(coins);
+    const coinsReceiverUser = bot.getUser(coinsReceiverUserId);
+    coinsSenderUser.subtractCoins(coinsToSend);
+    coinsReceiverUser.addCoins(coinsToSend);
+    bot.sendMessage(msg.key.remoteJid, { text: 'Coins transferidas exitosamente' }, { quoted: msg });
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al transferir las coins, intente nuevamente' }, { quoted: msg });
     bot.handleError(err.message);
   }
 };

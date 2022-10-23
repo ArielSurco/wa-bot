@@ -2,7 +2,7 @@ import Command from '../models/Command';
 import {
   createSticker,
   sendStatus,
-  sendCoins,
+  getCoins,
   createPoll,
   getInfo,
   activeWelcome,
@@ -12,6 +12,7 @@ import {
   banUsers,
   unbanUser,
   createFakeImg,
+  sendCoins,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -23,6 +24,7 @@ import {
   banUsersValidation,
   unbanUserValidation,
   createFakeImgValidation,
+  sendCoinsValidation,
 } from '../controllers/validationsController';
 
 export const regularUserCommands = [
@@ -47,8 +49,17 @@ export const regularUserCommands = [
     description: 'Indica la cantidad de coins que tienes',
     price: 0,
     minRole: RoleEnum.REGULAR,
-    apply: sendCoins,
+    apply: getCoins,
     validate: withoutValidation,
+  },
+  {
+    name: '/send',
+    description: 'Transfiere tus coins a otro usuario',
+    optionsStr: '<cantidad> <@usuario>',
+    price: 0,
+    minRole: RoleEnum.REGULAR,
+    apply: sendCoins,
+    validate: sendCoinsValidation,
   },
   {
     name: '/st',
@@ -106,6 +117,7 @@ export const adminCommands = [
   {
     name: '/poll',
     description: 'Crea una encuesta',
+    optionsStr: '<Título>, <Opción 1>, <Opción 2>, ...',
     price: 0,
     minRole: RoleEnum.ADMIN,
     apply: createPoll,

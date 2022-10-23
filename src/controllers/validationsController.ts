@@ -203,3 +203,27 @@ export const createFakeImgValidation = ({ bot, msg }: CommandParamsInterface) =>
   }
   return true;
 };
+
+export const sendCoinsValidation = ({ bot, user, msg }: CommandParamsInterface) => {
+  const [, coins] = getMessageText(msg.message).split(' ');
+  const hasOnlyOneMention = getMentions(msg).length === 1;
+  const hasSufficientCoins = user.getCoins() >= Number(coins);
+  const messageIndicatesCoins = coins && !Number.isNaN(Number(coins));
+  if (!messageIndicatesCoins) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar la cantidad de coins que quieres enviar.' }, { quoted: msg });
+    return false;
+  }
+  if (!hasOnlyOneMention) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes mencionar a un usuario.' }, { quoted: msg });
+    return false;
+  }
+  if (!hasSufficientCoins) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'No puedes transferir más coins que las que tienes.' }, { quoted: msg });
+    return false;
+  }
+  if (messageIndicatesCoins && !Number.isInteger(Number(coins))) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Prefiero que indiques números enteros.' }, { quoted: msg });
+    return false;
+  }
+  return true;
+};
