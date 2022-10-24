@@ -13,6 +13,7 @@ import {
   unbanUser,
   createFakeImg,
   sendCoins,
+  createCustomCommand,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -25,9 +26,12 @@ import {
   unbanUserValidation,
   createFakeImgValidation,
   sendCoinsValidation,
+  createCustomCommandValidation,
 } from '../controllers/validationsController';
+import { ConstantCommand } from './interfaces';
+import { getCustomCommands } from '../utils/botUtils';
 
-export const regularUserCommands = [
+export const regularUserCommands: ConstantCommand[] = [
   {
     name: '/menu',
     description: 'Muestra el menú de comandos',
@@ -78,9 +82,10 @@ export const regularUserCommands = [
     apply: createFakeImg,
     validate: createFakeImgValidation,
   },
+  ...getCustomCommands(),
 ];
 
-export const adminCommands = [
+export const adminCommands: ConstantCommand[] = [
   {
     name: '/ban',
     description: 'Banea a los usuarios indicados',
@@ -125,7 +130,7 @@ export const adminCommands = [
   },
 ];
 
-export const creatorCommands = [
+export const creatorCommands: ConstantCommand[] = [
   {
     name: '/ch',
     description: 'Cambia los atributos que se indiquen',
@@ -142,6 +147,14 @@ export const creatorCommands = [
     minRole: RoleEnum.CREATOR,
     apply: getInfo,
     validate: withoutValidation,
+  },
+  {
+    name: '/custom',
+    description: 'Crea un comando personalizado, que enviará la multimedia que se indique',
+    price: 0,
+    minRole: RoleEnum.CREATOR,
+    apply: createCustomCommand,
+    validate: createCustomCommandValidation,
   },
 ];
 

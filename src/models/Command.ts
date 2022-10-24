@@ -1,5 +1,5 @@
 import { RoleEnum } from '../constants/enums';
-import { CommandParamsInterface } from '../constants/interfaces';
+import { CommandParamsInterface, CustomCommandMedia } from '../constants/interfaces';
 import { isGroup } from '../utils/messageUtils';
 import { getUserRole } from '../utils/rols';
 
@@ -10,7 +10,8 @@ interface CommandConstructor {
   optionsStr?: string;
   minRole: RoleEnum;
   apply: Function,
-  validate: Function
+  validate: Function,
+  media?: CustomCommandMedia,
 }
 
 class Command {
@@ -28,8 +29,10 @@ class Command {
 
   validate: Function;
 
+  media: CustomCommandMedia;
+
   constructor({
-    name, price, description, optionsStr, minRole, apply, validate,
+    name, price, description, optionsStr, minRole, apply, validate, media,
   }: CommandConstructor) {
     this.name = name;
     this.price = price;
@@ -38,6 +41,7 @@ class Command {
     this.minRole = minRole;
     this.execute = apply;
     this.validate = validate;
+    this.media = media;
   }
 
   async use({ bot, msg, user }: CommandParamsInterface) {

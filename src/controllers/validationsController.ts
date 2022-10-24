@@ -3,7 +3,7 @@ import { CommandParamsInterface } from '../constants/interfaces';
 import {
   getMentions,
   getMessage,
-  getMessageText, getQuotedMessage, hasMediaForSticker, isGroup,
+  getMessageText, getQuotedMessage, hasMediaForCustomCommand, hasMediaForSticker, isGroup,
 } from '../utils/messageUtils';
 
 export const withoutValidation = () => true;
@@ -193,11 +193,11 @@ export const unbanUserValidation = ({ bot, msg }: CommandParamsInterface) => {
 export const createFakeImgValidation = ({ bot, msg }: CommandParamsInterface) => {
   const message = getMessage(msg.message);
   const quotedMessage = getQuotedMessage(msg.message);
-  if (!message.imageMessage) {
+  if (!message?.imageMessage) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes adjuntar la imagen que quieres poner como vista previa' }, { quoted: msg });
     return false;
   }
-  if (!quotedMessage.imageMessage) {
+  if (!quotedMessage?.imageMessage) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes responder a la imagen que quieres poner como original' }, { quoted: msg });
     return false;
   }
@@ -225,5 +225,32 @@ export const sendCoinsValidation = ({ bot, user, msg }: CommandParamsInterface) 
     bot.sendMessage(msg.key.remoteJid, { text: 'Prefiero que indiques números enteros.' }, { quoted: msg });
     return false;
   }
+  return true;
+};
+
+export const createCustomCommandValidation = ({ bot, msg }: CommandParamsInterface) => {
+  const [, customCommandName, ...rest] = getMessageText(msg.message).split(' ');
+  const isValidCommandName = /^[A-Za-z0-9\s]+$/g.test(customCommandName);
+  const quotedMessage = getQuotedMessage(msg.message);
+  const hasMedia = hasMediaForCustomCommand(msg.message)
+    || (quotedMessage && hasMediaForCustomCommand(quotedMessage));
+  const hasDescription = rest?.length > 0;
+  if (!customCommandName) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar el nombre del comando.' }, { quoted: msg });
+    return false;
+  }
+  if (!hasDescription) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar la descripción del comando.' }, { quoted: msg });
+    return false;
+  }
+  if (!isValidCommandName) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'El nombre del comando solo puede contener letras, números y espacios.' }, { quoted: msg });
+    return false;
+  }
+  if (!hasMedia) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar algún elemento multimedia.' }, { quoted: msg });
+    return false;
+  }
+
   return true;
 };

@@ -24,12 +24,14 @@ import { getData, setData } from '../utils/files';
 import { getRol, isCreator } from '../utils/rols';
 import { setChatsController } from '../controllers/chatsController';
 import { receiveMsg } from '../controllers/messageController';
-import { commands } from '../constants/commands';
+import { commands, regularUserCommands } from '../constants/commands';
 import { GroupActionEnum, GroupActionType, RoleEnum } from '../constants/enums';
 import { isGroup } from '../utils/messageUtils';
 import { defaultUsers } from '../constants/constants';
 import { groupParticipantsUpdate } from '../controllers/groupController';
 import { groupActions } from '../constants/groupActions';
+import { ConstantCommand } from '../constants/interfaces';
+import { getCustomCommands } from '../utils/botUtils';
 
 dotenv.config();
 const logger = Pino({ level: 'fatal' });
@@ -46,11 +48,14 @@ class Bot {
   sock: WASocket;
 
   constructor() {
-    const usersData = getData('users').map((user) => new User(user));
-    const groupsData = getData('groups').map((group) => new Group(group));
+    const usersData: User[] = getData('users').map((user) => new User(user));
+    const groupsData: Group[] = getData('groups').map((group) => new Group(group));
+    const customCommands: ConstantCommand[] = getCustomCommands();
+    const allCommands = [...commands, ...customCommands.map((command) => new Command(command))];
+
     this.users = usersData?.length ? usersData : defaultUsers;
     this.groups = groupsData?.length ? groupsData : [];
-    this.commands = commands;
+    this.commands = allCommands;
   }
 
   async startSock() {
@@ -159,6 +164,20 @@ class Bot {
   setGroups(groups: Array<Group>) {
     this.groups = groups;
     setData('groups', groups);
+  }
+
+  addCommand(command: Command) {
+    this.commands.push(command);
+    regularUserCommands.push({ ...command, apply: command.execute });
+    const allCustomCommands = getData('customCommands');
+    const newCustomCommands = [...allCustomCommands, command];
+    setData('customCommands', newCustomCommands);
+  }
+
+  static removeCommand(command: Command) {
+    const allCustomCommands = getData('customCommands');
+    const newCustomCommands = allCustomCommands.filter((comm) => comm.name !== command.name);
+    setData('customCommands', newCustomCommands);
   }
 
   sendMessage(chatId: string, message: AnyMessageContent, options?: MiscMessageGenerationOptions) {

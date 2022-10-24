@@ -1,4 +1,5 @@
 // External deps
+import fs from 'fs';
 import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticker-formatter';
 
 // Internal deps
@@ -14,11 +15,16 @@ import {
   getQuotedAuthor,
   getGroupActionText,
   getMessage,
+  hasMediaForCustomCommand,
+  getMimeType,
+  getMediaMessageBody,
 } from '../utils/messageUtils';
-import { CommandParamsInterface } from '../constants/interfaces';
+import { CommandParamsInterface, CustomCommandMedia } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
-import { GroupActionEnum } from '../constants/enums';
+import { GroupActionEnum, RoleEnum } from '../constants/enums';
 import { setChatsController } from './chatsController';
+import Command from '../models/Command';
+import { withoutValidation } from './validationsController';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
@@ -265,6 +271,75 @@ export const sendCoins = async ({ bot, user: coinsSenderUser, msg }: CommandPara
     bot.sendMessage(msg.key.remoteJid, { text: 'Coins transferidas exitosamente' }, { quoted: msg });
   } catch (err) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al transferir las coins, intente nuevamente' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
+};
+
+export const sendCustomCommandMedia = (
+  { bot, msg }: CommandParamsInterface,
+  media: CustomCommandMedia,
+) => {
+  try {
+    const mediaMessageBody = getMediaMessageBody(media);
+    const hasQuotedMessage = !!getQuotedMessage(msg.message);
+    if (hasQuotedMessage) {
+      const contextInfo = msg.message?.extendedTextMessage.contextInfo;
+      const quotedMessage = {
+        key: {
+          remoteJid: msg.key.remoteJid,
+          id: contextInfo.stanzaId,
+          participant: contextInfo.participant,
+        },
+        message: contextInfo.quotedMessage,
+      };
+      bot.sendMessage(msg.key.remoteJid, mediaMessageBody, { quoted: quotedMessage });
+    } else {
+      bot.sendMessage(msg.key.remoteJid, mediaMessageBody);
+    }
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando, intente nuevamente' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
+};
+
+export const createCustomCommand = async ({ bot, msg }: CommandParamsInterface) => {
+  try {
+    const [, customCommandName, ...rest] = getMessageText(msg.message).split(' ');
+    const commandDescription = rest.join(' ');
+    const quotedMessage = getQuotedMessage(msg.message);
+    const messageWithMedia = hasMediaForCustomCommand(msg.message) ? msg.message : quotedMessage;
+    const commandMedia = await getMedia(messageWithMedia);
+    const mimetype = getMimeType(messageWithMedia);
+    const fileExtension = mimetype.split('/')[1];
+    const rootPath = process.cwd();
+    const mediaPath = `${rootPath}/media/${customCommandName.trim()}Command.${fileExtension}`;
+    const media: CustomCommandMedia = {
+      mediaPath,
+      mimetype,
+      isAudio: !!messageWithMedia?.audioMessage,
+      isImage: !!messageWithMedia?.imageMessage,
+      isGif: messageWithMedia?.videoMessage && messageWithMedia?.videoMessage.gifPlayback,
+      isVideo: messageWithMedia?.videoMessage && !messageWithMedia?.videoMessage?.gifPlayback,
+      isDocument: !!messageWithMedia?.documentMessage,
+      isSticker: !!messageWithMedia?.stickerMessage,
+      isAnimatedSticker: messageWithMedia?.stickerMessage
+        && messageWithMedia.stickerMessage.isAnimated,
+    };
+    fs.writeFileSync(mediaPath, commandMedia);
+    const customCommand = new Command({
+      name: `/${customCommandName.trim()}`,
+      description: commandDescription,
+      minRole: RoleEnum.REGULAR,
+      price: 1,
+      media,
+      apply: (params: CommandParamsInterface) => sendCustomCommandMedia(params, media),
+      validate: withoutValidation,
+    });
+    bot.addCommand(customCommand);
+    bot.sendMessage(msg.key.remoteJid, { text: 'Comando creado exitosamente' }, { quoted: msg });
+  } catch (err) {
+    console.log(err);
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al crear el comando, intente nuevamente' }, { quoted: msg });
     bot.handleError(err.message);
   }
 };

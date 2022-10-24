@@ -5,6 +5,7 @@ import Stream from 'stream';
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import {
+  AnyMessageContent,
   DownloadableMessage,
   downloadContentFromMessage, MediaType, proto, WAMessage,
 } from '@adiwajshing/baileys';
@@ -12,6 +13,7 @@ import { tmpdir } from 'os';
 
 // External deps
 import { GroupActionEnum } from '../constants/enums';
+import { CustomCommandMedia } from '../constants/interfaces';
 
 export const getMedia = async (msg: proto.IMessage) => {
   try {
@@ -93,7 +95,7 @@ export const getMessageText = (msg: proto.IMessage) => msg?.conversation
 export const getQuotedMessage = (msg: proto.IMessage) => {
   const auxMessage = getMessage(msg);
   const typeMessage = Object.keys(auxMessage)[0];
-  const quotedMessage = auxMessage[typeMessage]?.contextInfo?.quotedMessage
+  const quotedMessage: proto.IMessage = auxMessage[typeMessage]?.contextInfo?.quotedMessage
     || auxMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
   return quotedMessage || null;
 };
@@ -118,3 +120,28 @@ export const getMentions = (msg: WAMessage) => msg.message?.extendedTextMessage?
 export const getQuotedAuthor = (msg: WAMessage) => msg.message?.extendedTextMessage?.contextInfo?.participant;
 
 export const getGroupActionText = (groupAction: GroupActionEnum) => GroupActionEnum[groupAction];
+
+export const hasMediaForCustomCommand = (msg: proto.IMessage) => !!(
+  msg.imageMessage
+  || msg.stickerMessage
+  || msg.videoMessage
+  || msg.audioMessage
+  || msg.documentMessage
+);
+
+export const getMimeType = (msg: proto.IMessage) => {
+  const type = Object.keys(msg)[0];
+  const mimeType = msg[type]?.mimetype;
+  return mimeType;
+};
+
+export const getMediaMessageBody = (media: CustomCommandMedia): AnyMessageContent => {
+  const mediaObj = { url: media.mediaPath };
+  if (media.isImage) return { image: mediaObj };
+  if (media.isVideo) return { video: mediaObj };
+  if (media.isGif) return { video: mediaObj, gifPlayback: true };
+  if (media.isAudio) return { audio: mediaObj };
+  if (media.isSticker) return { sticker: mediaObj, isAnimated: media.isAnimatedSticker };
+  if (media.isDocument) return { document: mediaObj, mimetype: media.mimetype };
+  return { text: 'El comando no fue guardado correctamente, se debe eliminar y crear de nuevo' };
+};
