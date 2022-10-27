@@ -221,6 +221,10 @@ export const sendCoinsValidation = ({ bot, user, msg }: CommandParamsInterface) 
     bot.sendMessage(msg.key.remoteJid, { text: 'No puedes transferir más coins que las que tienes.' }, { quoted: msg });
     return false;
   }
+  if (Number(coins) <= 0) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'No puedes transferir una cantidad negativa o nula de coins.' }, { quoted: msg });
+    return false;
+  }
   if (messageIndicatesCoins && !Number.isInteger(Number(coins))) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Prefiero que indiques números enteros.' }, { quoted: msg });
     return false;
