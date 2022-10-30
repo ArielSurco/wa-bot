@@ -258,3 +258,16 @@ export const createCustomCommandValidation = ({ bot, msg }: CommandParamsInterfa
 
   return true;
 };
+
+export const mentionEveryoneValidation = ({ bot, msg }: CommandParamsInterface) => {
+  const [, ...rest] = getMessageText(msg.message).split(' ');
+  if (!isGroup(msg.key.remoteJid)) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
+    return false;
+  }
+  if (!rest?.length) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar el mensaje que quieres enviar.' }, { quoted: msg });
+    return false;
+  }
+  return true;
+};

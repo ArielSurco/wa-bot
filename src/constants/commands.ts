@@ -14,6 +14,7 @@ import {
   createFakeImg,
   sendCoins,
   createCustomCommand,
+  mentionEveryone,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -27,6 +28,7 @@ import {
   createFakeImgValidation,
   sendCoinsValidation,
   createCustomCommandValidation,
+  mentionEveryoneValidation,
 } from '../controllers/validationsController';
 import { ConstantCommand } from './interfaces';
 import { getCustomCommands } from '../utils/botUtils';
@@ -101,6 +103,14 @@ export const adminCommands: ConstantCommand[] = [
     minRole: RoleEnum.ADMIN,
     apply: unbanUser,
     validate: unbanUserValidation,
+  },
+  {
+    name: '@everyone',
+    description: 'Menciona a todos los usuarios del grupo',
+    price: 0,
+    minRole: RoleEnum.ADMIN,
+    apply: mentionEveryone,
+    validate: mentionEveryoneValidation,
   },
   {
     name: '/welcome on',

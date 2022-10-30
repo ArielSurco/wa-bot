@@ -343,3 +343,25 @@ export const createCustomCommand = async ({ bot, msg }: CommandParamsInterface) 
     bot.handleError(err.message);
   }
 };
+
+export const mentionEveryone = ({ bot, msg }: CommandParamsInterface) => {
+  const isAreaCode = (word: string) => word.startsWith('+') && !!Number(word.slice(1));
+  const [, ...rest] = getMessageText(msg.message).split(' ');
+  const hasFilterByAreaCodes = rest.some((word: string) => isAreaCode(word));
+  const group = bot.getGroup(msg.key.remoteJid);
+  let participantsToMention = group.getParticipants();
+  if (hasFilterByAreaCodes) {
+    const areaCodesFilter: string[] = rest
+      .filter((word: string) => isAreaCode(word))
+      .map((word: string) => word.slice(1));
+    participantsToMention = participantsToMention
+      .filter((participantId) => areaCodesFilter
+        .some((areaCode) => participantId.startsWith(areaCode)));
+  }
+  const everyoneMessage = `_*COMUNICADO PARA LOS MIEMBROS*_\n${rest.filter((word: string) => !isAreaCode(word)).join(' ')}`;
+  bot.sendMessage(
+    msg.key.remoteJid,
+    { text: everyoneMessage, mentions: participantsToMention },
+    { quoted: msg },
+  );
+};
