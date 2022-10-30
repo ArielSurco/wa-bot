@@ -1,5 +1,6 @@
 // External deps
 import fs from 'fs';
+import axios from 'axios';
 import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticker-formatter';
 
 // Internal deps
@@ -19,12 +20,14 @@ import {
   getMimeType,
   getMediaMessageBody,
 } from '../utils/messageUtils';
-import { CommandParamsInterface, CustomCommandMedia } from '../constants/interfaces';
+import { CommandParamsInterface, CustomCommandMedia, LbryVideo } from '../constants/interfaces';
 import { getRoleText } from '../utils/rols';
 import { GroupActionEnum, RoleEnum } from '../constants/enums';
 import { setChatsController } from './chatsController';
 import Command from '../models/Command';
 import { withoutValidation } from './validationsController';
+import { getAllLbryVideos, saveVideosChannel } from '../modules/lbry';
+import { getRandomItemsFromArray } from '../utils/utils';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
@@ -364,4 +367,42 @@ export const mentionEveryone = ({ bot, msg }: CommandParamsInterface) => {
     { text: everyoneMessage, mentions: participantsToMention },
     { quoted: msg },
   );
+};
+
+export const addLbryChannel = async ({ bot, msg }: CommandParamsInterface) => {
+  try {
+    const createLog = async (message: string) => bot.sendMessage(
+      msg.key.remoteJid,
+      { text: message },
+      { quoted: msg },
+    );
+    const [,, channelName] = getMessageText(msg.message).split(' ');
+    await saveVideosChannel(channelName, createLog);
+    await bot.sendMessage(msg.key.remoteJid, { text: 'Canal agregado exitosamente' }, { quoted: msg });
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al agregar el canal, intente nuevamente' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
+};
+
+export const getLbryVideos = async ({ bot, msg }: CommandParamsInterface) => {
+  try {
+    const [, ...rest] = getMessageText(msg.message).split(' ');
+    const searchQuery = rest.join(' ');
+    let lbryVideos: LbryVideo[] = getAllLbryVideos();
+    if (rest?.length && searchQuery) {
+      lbryVideos = lbryVideos
+        .filter((video) => video.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    const randomLbryVideos = getRandomItemsFromArray(5, lbryVideos);
+    await Promise.all(randomLbryVideos.map(async (lbryVideo: LbryVideo) => {
+      const response = await axios.get(lbryVideo.thumbnail, { responseType: 'arraybuffer' });
+      const mediaBuffer = Buffer.from(response.data);
+      const captionText = `${lbryVideo.title}\n${lbryVideo.videoUrl}`;
+      return bot.sendMessage(msg.key.remoteJid, { image: mediaBuffer, caption: captionText });
+    }));
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al obtener los videos, intente nuevamente.' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
 };

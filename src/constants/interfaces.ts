@@ -47,3 +47,14 @@ export interface ConstantCommand {
   apply: Function;
   validate: Function;
 }
+
+export interface LbryVideo {
+  title: string;
+  thumbnail: string;
+  videoUrl: string;
+}
+
+export interface LbryItemData {
+  channel: string;
+  videos: LbryVideo[];
+}

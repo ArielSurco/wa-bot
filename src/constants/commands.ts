@@ -15,6 +15,8 @@ import {
   sendCoins,
   createCustomCommand,
   mentionEveryone,
+  addLbryChannel,
+  getLbryVideos,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -83,6 +85,15 @@ export const regularUserCommands: ConstantCommand[] = [
     minRole: RoleEnum.REGULAR,
     apply: createFakeImg,
     validate: createFakeImgValidation,
+  },
+  {
+    name: '/lbry',
+    description: 'Envía 5 links a videos de los canales de Lbry que el creador haya agregado. Si no se especifica título se buscará entre todos los videos.',
+    optionsStr: '<Titulo>',
+    price: 20,
+    minRole: RoleEnum.REGULAR,
+    apply: getLbryVideos,
+    validate: withoutValidation,
   },
   ...getCustomCommands(),
 ];
@@ -166,10 +177,19 @@ export const creatorCommands: ConstantCommand[] = [
     apply: createCustomCommand,
     validate: createCustomCommandValidation,
   },
+  {
+    name: '/lbry add',
+    description: 'Agrega un canal de Lbry, guardando los videos que mandará el comando /lbry',
+    optionsStr: '<Canal>',
+    price: 0,
+    minRole: RoleEnum.CREATOR,
+    apply: addLbryChannel,
+    validate: withoutValidation,
+  },
 ];
 
 export const commands = [
-  ...regularUserCommands.map((comm) => new Command(comm)),
-  ...adminCommands.map((comm) => new Command(comm)),
   ...creatorCommands.map((comm) => new Command(comm)),
+  ...adminCommands.map((comm) => new Command(comm)),
+  ...regularUserCommands.map((comm) => new Command(comm)),
 ];
