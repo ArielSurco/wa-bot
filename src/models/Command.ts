@@ -73,11 +73,11 @@ class Command {
   }
 
   static getCommand(commands: Array<Command>, message: string) {
-    return commands.find((command) => message?.startsWith(command.name));
+    return commands.find((command) => message?.toLowerCase().startsWith(command.name));
   }
 
   static isCommand(commands: Array<Command>, message: string) {
-    return commands.some((command) => message?.startsWith(command.name));
+    return commands.some((command) => message?.toLowerCase().startsWith(command.name));
   }
 }
 
