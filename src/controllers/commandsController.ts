@@ -385,7 +385,7 @@ export const addLbryChannel = async ({ bot, msg }: CommandParamsInterface) => {
   }
 };
 
-export const getLbryVideos = async ({ bot, msg }: CommandParamsInterface) => {
+export const getLbryVideos = async ({ bot, msg, user }: CommandParamsInterface) => {
   try {
     const [, ...rest] = getMessageText(msg.message).split(' ');
     const searchQuery = rest.join(' ');
@@ -393,6 +393,11 @@ export const getLbryVideos = async ({ bot, msg }: CommandParamsInterface) => {
     if (rest?.length && searchQuery) {
       lbryVideos = lbryVideos
         .filter((video) => video.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    if (!lbryVideos.length) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'No se encontraron videos, sus coins serán devueltas.' }, { quoted: msg });
+      user.addCoins(20);
+      return;
     }
     const randomLbryVideos = getRandomItemsFromArray(5, lbryVideos);
     await Promise.all(randomLbryVideos.map(async (lbryVideo: LbryVideo) => {
