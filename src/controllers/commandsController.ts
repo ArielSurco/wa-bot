@@ -28,6 +28,7 @@ import Command from '../models/Command';
 import { withoutValidation } from './validationsController';
 import { getAllLbryVideos, saveVideosChannel } from '../modules/lbry';
 import { getRandomItemsFromArray } from '../utils/utils';
+import User from '../models/User';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
@@ -352,19 +353,23 @@ export const mentionEveryone = ({ bot, msg }: CommandParamsInterface) => {
   const [, ...rest] = getMessageText(msg.message).split(' ');
   const hasFilterByAreaCodes = rest.some((word: string) => isAreaCode(word));
   const group = bot.getGroup(msg.key.remoteJid);
-  let participantsToMention = group.getParticipants();
+  let participantsToMention: User[] = group
+    .getParticipants()
+    .map((participantId) => bot.getUser(participantId))
+    .filter((user) => user.getRole(msg.key.remoteJid) < RoleEnum.ADMIN);
   if (hasFilterByAreaCodes) {
     const areaCodesFilter: string[] = rest
       .filter((word: string) => isAreaCode(word))
       .map((word: string) => word.slice(1));
     participantsToMention = participantsToMention
-      .filter((participantId) => areaCodesFilter
-        .some((areaCode) => participantId.startsWith(areaCode)));
+      .filter((participant) => areaCodesFilter
+        .some((areaCode) => participant.id.startsWith(areaCode)));
   }
+  const participantIds = participantsToMention.map((participant) => participant.id);
   const everyoneMessage = `_*COMUNICADO PARA LOS MIEMBROS*_\n${rest.filter((word: string) => !isAreaCode(word)).join(' ')}`;
   bot.sendMessage(
     msg.key.remoteJid,
-    { text: everyoneMessage, mentions: participantsToMention },
+    { text: everyoneMessage, mentions: participantIds },
     { quoted: msg },
   );
 };

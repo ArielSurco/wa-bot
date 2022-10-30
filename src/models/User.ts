@@ -39,6 +39,13 @@ class User {
     return menuMessage(role);
   }
 
+  getRole(groupId?: string): RoleEnum {
+    if (groupId) {
+      return this.role[groupId];
+    }
+    return this.role.globalRole;
+  }
+
   getGroupIds() {
     const groupIds = Object.keys(this.role).filter((key) => key !== 'globalRole');
     return groupIds;
