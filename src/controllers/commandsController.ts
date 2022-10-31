@@ -2,9 +2,9 @@
 import fs from 'fs';
 import axios from 'axios';
 import { createSticker as createStickerFromMedia, StickerTypes } from 'wa-sticker-formatter';
+import { extractImageThumb, generateMessageID } from '@adiwajshing/baileys';
 
 // Internal deps
-import { extractImageThumb, generateMessageID } from '@adiwajshing/baileys';
 import {
   getMedia,
   getMessageText,
@@ -237,9 +237,13 @@ export const banUsers = async ({ bot, msg }: CommandParamsInterface) => {
   );
 };
 
-export const unbanUser = ({ bot, msg }: CommandParamsInterface) => {
+export const unbanUser = async ({ bot, msg }: CommandParamsInterface) => {
+  const group = bot.getGroup(msg.key.remoteJid);
   const authorQuotedMsg = getQuotedAuthor(msg);
-  bot.groupParticipantsUpdate('add', msg.key.remoteJid, [authorQuotedMsg]);
+  const response = await bot.groupParticipantsUpdate('add', group.id, [authorQuotedMsg]);
+  if (Number(response?.status) !== 200) {
+    bot.sendMessage(group.id, { text: 'No se pudo agregar al usuario por su configuración de privacidad. Agreguelo manualmente mandándole una invitación.' }, { quoted: msg });
+  }
 };
 
 export const createFakeImg = async ({ bot, msg }: CommandParamsInterface) => {

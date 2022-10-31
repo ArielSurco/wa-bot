@@ -194,7 +194,7 @@ class Bot {
     return this.sock.sendMessage(chatId, message, options);
   }
 
-  relayMessage(chatId: string, message: proto.IMessage, options: MessageRelayOptions) {
+  relayMessage(chatId: string, message: proto.IMessage, options?: MessageRelayOptions) {
     return this.sock.relayMessage(chatId, message, options);
   }
 
@@ -208,8 +208,14 @@ class Bot {
     usersToUpdateIds: string[],
     banMessage?: string,
   ) {
-    await this.sock.groupParticipantsUpdate(groupId, usersToUpdateIds, updateType);
-
+    const [response] = await this.sock.groupParticipantsUpdate(
+      groupId,
+      usersToUpdateIds,
+      updateType,
+    );
+    if (Number(response.status) !== 200) {
+      return response;
+    }
     if (updateType === 'remove') {
       if (banMessage) {
         await Promise.all(
@@ -241,6 +247,7 @@ class Bot {
         }
       });
     }
+    return undefined;
   }
 }
 
