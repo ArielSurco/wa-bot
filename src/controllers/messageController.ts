@@ -9,7 +9,6 @@ import { GroupActionType } from '../constants/enums';
 import { isCreator } from '../utils/rols';
 
 export const receiveMsg = async (bot: Bot, msg: WAMessage) => {
-  console.log(msg);
   const msgText = getMessageText(msg.message);
   const user = await bot.getMessageUser(msg);
   const command = Command.getCommand(bot.getCommands(), msgText);

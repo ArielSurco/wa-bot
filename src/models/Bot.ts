@@ -213,7 +213,7 @@ class Bot {
       usersToUpdateIds,
       updateType,
     );
-    if (Number(response.status) !== 200) {
+    if (Number(response.status) >= 400) {
       return response;
     }
     if (updateType === 'remove') {

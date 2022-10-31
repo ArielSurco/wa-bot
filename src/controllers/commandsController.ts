@@ -241,7 +241,7 @@ export const unbanUser = async ({ bot, msg }: CommandParamsInterface) => {
   const group = bot.getGroup(msg.key.remoteJid);
   const authorQuotedMsg = getQuotedAuthor(msg);
   const response = await bot.groupParticipantsUpdate('add', group.id, [authorQuotedMsg]);
-  if (Number(response?.status) !== 200) {
+  if (Number(response?.status) >= 400) {
     bot.sendMessage(group.id, { text: 'No se pudo agregar al usuario por su configuración de privacidad. Agreguelo manualmente mandándole una invitación.' }, { quoted: msg });
   }
 };
