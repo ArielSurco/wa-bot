@@ -1,5 +1,6 @@
 import { GroupActionEnum } from '../constants/enums';
 import { CommandParamsInterface } from '../constants/interfaces';
+import { getData } from '../utils/files';
 import {
   getMentions,
   getMessage,
@@ -241,8 +242,14 @@ export const createCustomCommandValidation = ({ bot, msg }: CommandParamsInterfa
   const hasDescription = rest?.length > 0;
   const hasCommissionParam = rest?.some((word: string) => word.startsWith('-c'));
   const hasCustomPriceParam = rest?.some((word: string) => word.startsWith('-p'));
+  const customCommandNames: string[] = getData('customCommands')?.map((customCommand) => customCommand.name.slice(1));
+
   if (!customCommandName) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar el nombre del comando.' }, { quoted: msg });
+    return false;
+  }
+  if (customCommandNames.includes(customCommandName)) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ya existe un comando con ese nombre.' }, { quoted: msg });
     return false;
   }
   if (!hasDescription) {
