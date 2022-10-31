@@ -174,6 +174,16 @@ class Bot {
     setData('customCommands', newCustomCommands);
   }
 
+  removeCommand(commandName: string) {
+    this.commands = this.commands.filter((command) => command.name !== commandName);
+    const indexInRegularCommands = regularUserCommands
+      .findIndex((command) => command.name === commandName);
+    regularUserCommands.splice(indexInRegularCommands, 1);
+    const allCustomCommands = getData('customCommands');
+    const newCustomCommands = allCustomCommands.filter((command) => command.name !== commandName);
+    setData('customCommands', newCustomCommands);
+  }
+
   static removeCommand(command: Command) {
     const allCustomCommands = getData('customCommands');
     const newCustomCommands = allCustomCommands.filter((comm) => comm.name !== command.name);

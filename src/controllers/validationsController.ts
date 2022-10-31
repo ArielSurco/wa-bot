@@ -243,21 +243,30 @@ export const createCustomCommandValidation = ({ bot, msg }: CommandParamsInterfa
   const hasCommissionParam = rest?.some((word: string) => word.startsWith('-c'));
   const hasCustomPriceParam = rest?.some((word: string) => word.startsWith('-p'));
   const customCommandNames: string[] = getData('customCommands')?.map((customCommand) => customCommand.name.slice(1));
+  const isRemoveAction = rest?.some((word: string) => word.toLowerCase() === '-r');
+  const alreadyExistsCommand = customCommandNames.includes(customCommandName);
 
   if (!customCommandName) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar el nombre del comando.' }, { quoted: msg });
     return false;
   }
-  if (customCommandNames.includes(customCommandName)) {
+  if (!isValidCommandName) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'El nombre del comando solo puede contener letras, números y espacios.' }, { quoted: msg });
+    return false;
+  }
+  if (alreadyExistsCommand) {
+    if (isRemoveAction) {
+      return true;
+    }
     bot.sendMessage(msg.key.remoteJid, { text: 'Ya existe un comando con ese nombre.' }, { quoted: msg });
+    return false;
+  }
+  if (!alreadyExistsCommand && isRemoveAction) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'No puedes eliminar un comando que no existe.' }, { quoted: msg });
     return false;
   }
   if (!hasDescription) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar la descripción del comando.' }, { quoted: msg });
-    return false;
-  }
-  if (!isValidCommandName) {
-    bot.sendMessage(msg.key.remoteJid, { text: 'El nombre del comando solo puede contener letras, números y espacios.' }, { quoted: msg });
     return false;
   }
   if (hasCommissionParam && getMentions(msg).length !== 1) {

@@ -315,6 +315,13 @@ export const sendCustomCommandMedia = async (
 export const createCustomCommand = async ({ bot, msg }: CommandParamsInterface) => {
   try {
     const [, customCommandName, ...rest] = getMessageText(msg.message).split(' ');
+    const isRemoveAction = rest?.some((word: string) => word.toLowerCase() === '-r');
+    if (isRemoveAction) {
+      bot.removeCommand(`/${customCommandName}`);
+      bot.sendMessage(msg.key.remoteJid, { text: 'Comando eliminado exitosamente' }, { quoted: msg });
+      return;
+    }
+
     const commandDescription = rest.filter((word: string) => !(word.startsWith('-p') || word.startsWith('-c') || word.startsWith('@'))).join(' ');
     const quotedMessage = getQuotedMessage(msg.message);
     const messageWithMedia = hasMediaForCustomCommand(msg.message) ? msg.message : quotedMessage;
