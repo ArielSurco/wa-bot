@@ -279,13 +279,14 @@ export const sendCoins = async ({ bot, user: coinsSenderUser, msg }: CommandPara
   }
 };
 
-export const sendCustomCommandMedia = (
+export const sendCustomCommandMedia = async (
   { bot, msg }: CommandParamsInterface,
   media: CustomCommandMedia,
 ) => {
   try {
     const mediaMessageBody = getMediaMessageBody(media);
     const hasQuotedMessage = !!getQuotedMessage(msg.message);
+
     if (hasQuotedMessage) {
       const contextInfo = msg.message?.extendedTextMessage.contextInfo;
       const quotedMessage = {
@@ -296,9 +297,14 @@ export const sendCustomCommandMedia = (
         },
         message: contextInfo.quotedMessage,
       };
-      bot.sendMessage(msg.key.remoteJid, mediaMessageBody, { quoted: quotedMessage });
+      await bot.sendMessage(msg.key.remoteJid, mediaMessageBody, { quoted: quotedMessage });
     } else {
-      bot.sendMessage(msg.key.remoteJid, mediaMessageBody);
+      await bot.sendMessage(msg.key.remoteJid, mediaMessageBody);
+    }
+
+    if (media.userIdForCommission) {
+      const user = bot.getUser(media.userIdForCommission);
+      user.addCoins(media.commission);
     }
   } catch (err) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando, intente nuevamente' }, { quoted: msg });
@@ -309,7 +315,7 @@ export const sendCustomCommandMedia = (
 export const createCustomCommand = async ({ bot, msg }: CommandParamsInterface) => {
   try {
     const [, customCommandName, ...rest] = getMessageText(msg.message).split(' ');
-    const commandDescription = rest.join(' ');
+    const commandDescription = rest.filter((word: string) => !(word.startsWith('-p') || word.startsWith('-c') || word.startsWith('@'))).join(' ');
     const quotedMessage = getQuotedMessage(msg.message);
     const messageWithMedia = hasMediaForCustomCommand(msg.message) ? msg.message : quotedMessage;
     const commandMedia = await getMedia(messageWithMedia);
@@ -317,7 +323,22 @@ export const createCustomCommand = async ({ bot, msg }: CommandParamsInterface) 
     const fileExtension = mimetype.split('/')[1];
     const rootPath = process.cwd();
     const mediaPath = `${rootPath}/media/${customCommandName.trim()}Command.${fileExtension}`;
+
+    let userIdForCommission: string;
+    const hasCommision = rest.some((word: string) => word.startsWith('-c'));
+    if (hasCommision) {
+      [userIdForCommission] = getMentions(msg);
+    }
+    let customCommandPrice: number;
+    const hasCustomPrice = rest.some((word: string) => word.startsWith('-p'));
+    if (hasCustomPrice) {
+      const priceParam = rest.find((word: string) => word.startsWith('-p'));
+      customCommandPrice = Number(priceParam.replace('-p=', ''));
+    }
+
     const media: CustomCommandMedia = {
+      userIdForCommission,
+      commission: customCommandPrice,
       mediaPath,
       mimetype,
       isAudio: !!messageWithMedia?.audioMessage,
@@ -334,7 +355,7 @@ export const createCustomCommand = async ({ bot, msg }: CommandParamsInterface) 
       name: `/${customCommandName.trim()}`,
       description: commandDescription,
       minRole: RoleEnum.REGULAR,
-      price: 1,
+      price: customCommandPrice || 1,
       media,
       apply: (params: CommandParamsInterface) => sendCustomCommandMedia(params, media),
       validate: withoutValidation,

@@ -27,6 +27,8 @@ export interface ParticipantsUpdate {
 }
 
 export interface CustomCommandMedia {
+  userIdForCommission?: string,
+  commission?: number,
   mediaPath: string,
   mimetype: string,
   isAudio: boolean,

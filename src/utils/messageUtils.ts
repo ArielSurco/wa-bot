@@ -114,7 +114,13 @@ export const isLink = (msgText: string) => {
 };
 
 // eslint-disable-next-line max-len
-export const getMentions = (msg: WAMessage) => msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+export const getMentions = (msg: WAMessage) => {
+  const auxMessage = getMessage(msg.message);
+  const typeMessage = Object.keys(auxMessage)[0];
+  const mentions: string[] = auxMessage[typeMessage]?.contextInfo?.mentionedJid
+    || auxMessage?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+  return mentions;
+};
 
 // eslint-disable-next-line max-len
 export const getQuotedAuthor = (msg: WAMessage) => msg.message?.extendedTextMessage?.contextInfo?.participant;

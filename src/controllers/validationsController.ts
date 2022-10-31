@@ -239,6 +239,8 @@ export const createCustomCommandValidation = ({ bot, msg }: CommandParamsInterfa
   const hasMedia = hasMediaForCustomCommand(msg.message)
     || (quotedMessage && hasMediaForCustomCommand(quotedMessage));
   const hasDescription = rest?.length > 0;
+  const hasCommissionParam = rest?.some((word: string) => word.startsWith('-c'));
+  const hasCustomPriceParam = rest?.some((word: string) => word.startsWith('-p'));
   if (!customCommandName) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar el nombre del comando.' }, { quoted: msg });
     return false;
@@ -250,6 +252,17 @@ export const createCustomCommandValidation = ({ bot, msg }: CommandParamsInterfa
   if (!isValidCommandName) {
     bot.sendMessage(msg.key.remoteJid, { text: 'El nombre del comando solo puede contener letras, números y espacios.' }, { quoted: msg });
     return false;
+  }
+  if (hasCommissionParam && getMentions(msg).length !== 1) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes mencionar al usuario que quieres que reciba la comision por uso.' }, { quoted: msg });
+    return false;
+  }
+  if (hasCustomPriceParam) {
+    const customCommandPrice = rest.find((word: string) => word.startsWith('-p')).replace('-p=', '');
+    if (!Number(customCommandPrice) || Number(customCommandPrice) <= 0) {
+      bot.sendMessage(msg.key.remoteJid, { text: 'El precio debe ser un número mayor a 0.' }, { quoted: msg });
+      return false;
+    }
   }
   if (!hasMedia) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar algún elemento multimedia.' }, { quoted: msg });
