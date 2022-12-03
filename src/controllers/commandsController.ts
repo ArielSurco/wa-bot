@@ -29,6 +29,7 @@ import { withoutValidation } from './validationsController';
 import { getAllLbryVideos, saveVideosChannel } from '../modules/lbry';
 import { getRandomItemsFromArray } from '../utils/utils';
 import User from '../models/User';
+import { postCreateAnimeFace } from '../services/animeFace';
 
 export const createSticker = async ({ bot, msg }: CommandParamsInterface) => {
   try {
@@ -445,6 +446,24 @@ export const getLbryVideos = async ({ bot, msg, user }: CommandParamsInterface) 
     }));
   } catch (err) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al obtener los videos, intente nuevamente.' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
+};
+
+export const createAnimeFace = async ({ bot, msg }: CommandParamsInterface) => {
+  try {
+    const auxMsg = getMessage(msg.message);
+    const message = auxMsg?.imageMessage ? auxMsg : getQuotedMessage(auxMsg);
+    const mediaData: Buffer = await getMedia(message);
+    await bot.sendMessage(msg.key.remoteJid, { text: 'Pedido tomado, espere un momento...' }, { quoted: msg });
+    const response = await postCreateAnimeFace(mediaData.toString('base64'));
+    const imageUrls = JSON.parse(response.extra)?.img_urls;
+
+    const imageToSendResponse = await axios.get(imageUrls[0], { responseType: 'arraybuffer' });
+    const mediaBuffer = Buffer.from(imageToSendResponse.data);
+    bot.sendMessage(msg.key.remoteJid, { image: mediaBuffer }, { quoted: msg });
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al crear la imagen, intente nuevamente o use otra imagen.' }, { quoted: msg });
     bot.handleError(err.message);
   }
 };

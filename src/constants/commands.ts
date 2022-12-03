@@ -17,6 +17,7 @@ import {
   mentionEveryone,
   addLbryChannel,
   getLbryVideos,
+  createAnimeFace,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -31,6 +32,7 @@ import {
   sendCoinsValidation,
   createCustomCommandValidation,
   mentionEveryoneValidation,
+  createAnimeFaceValidation,
 } from '../controllers/validationsController';
 import { ConstantCommand } from './interfaces';
 import { getCustomCommands } from '../utils/botUtils';
@@ -94,6 +96,14 @@ export const regularUserCommands: ConstantCommand[] = [
     minRole: RoleEnum.REGULAR,
     apply: getLbryVideos,
     validate: withoutValidation,
+  },
+  {
+    name: '/animeface',
+    description: 'Convierte la foto que indiques en anime',
+    price: 50,
+    minRole: RoleEnum.REGULAR,
+    apply: createAnimeFace,
+    validate: createAnimeFaceValidation,
   },
   ...getCustomCommands(),
 ];

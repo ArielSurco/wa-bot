@@ -300,3 +300,16 @@ export const mentionEveryoneValidation = ({ bot, msg }: CommandParamsInterface) 
   }
   return true;
 };
+
+export const createAnimeFaceValidation = ({ bot, msg }: CommandParamsInterface) => {
+  const auxMsg = getMessage(msg.message);
+  const quotedMessage = getQuotedMessage(auxMsg);
+  const hasImage = !!(auxMsg?.imageMessage || quotedMessage?.imageMessage);
+
+  if (!hasImage) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Debes indicar una imagen.' }, { quoted: msg });
+    return false;
+  }
+
+  return true;
+};
