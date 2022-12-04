@@ -450,7 +450,7 @@ export const getLbryVideos = async ({ bot, msg, user }: CommandParamsInterface) 
   }
 };
 
-export const createAnimeFace = async ({ bot, msg }: CommandParamsInterface) => {
+export const createAnimeFace = async ({ bot, msg, user }: CommandParamsInterface) => {
   try {
     const auxMsg = getMessage(msg.message);
     const message = auxMsg?.imageMessage ? auxMsg : getQuotedMessage(auxMsg);
@@ -476,6 +476,7 @@ export const createAnimeFace = async ({ bot, msg }: CommandParamsInterface) => {
     const mediaBuffer = Buffer.from(imageToSendResponse.data);
     bot.sendMessage(msg.key.remoteJid, { image: mediaBuffer }, { quoted: msg });
   } catch (err) {
+    user.addCoins(50);
     bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al crear la imagen, intente nuevamente o use otra imagen.' }, { quoted: msg });
     bot.handleError(err.message);
   }
