@@ -457,8 +457,21 @@ export const createAnimeFace = async ({ bot, msg }: CommandParamsInterface) => {
     const mediaData: Buffer = await getMedia(message);
     await bot.sendMessage(msg.key.remoteJid, { text: 'Pedido tomado, espere un momento...' }, { quoted: msg });
     const response = await postCreateAnimeFace(mediaData.toString('base64'));
-    const imageUrls = JSON.parse(response.extra)?.img_urls;
 
+    if (response.code !== 0) {
+      if (response.code === 1001) {
+        await bot.sendMessage(msg.key.remoteJid, { text: 'Error del servicio: No se encontró una cara en la imagen.' }, { quoted: msg });
+        return;
+      }
+      if (response.code === 2114) {
+        await bot.sendMessage(msg.key.remoteJid, { text: 'Error del servicio: Imagen no permitida.' }, { quoted: msg });
+        return;
+      }
+      await bot.sendMessage(msg.key.remoteJid, { text: `Error del servicio: ${response.msg}` }, { quoted: msg });
+      return;
+    }
+
+    const imageUrls = JSON.parse(response.extra)?.img_urls;
     const imageToSendResponse = await axios.get(imageUrls[0], { responseType: 'arraybuffer' });
     const mediaBuffer = Buffer.from(imageToSendResponse.data);
     bot.sendMessage(msg.key.remoteJid, { image: mediaBuffer }, { quoted: msg });
