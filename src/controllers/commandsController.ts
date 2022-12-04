@@ -459,6 +459,7 @@ export const createAnimeFace = async ({ bot, msg, user }: CommandParamsInterface
     const response = await postCreateAnimeFace(mediaData.toString('base64'));
 
     if (response.code !== 0) {
+      user.addCoins(50);
       if (response.code === 1001) {
         await bot.sendMessage(msg.key.remoteJid, { text: 'Error del servicio: No se encontró una cara en la imagen.' }, { quoted: msg });
         return;
