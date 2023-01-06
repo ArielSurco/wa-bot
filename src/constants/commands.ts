@@ -18,6 +18,7 @@ import {
   addLbryChannel,
   getLbryVideos,
   createAnimeFace,
+  updateLbryChannels,
 } from '../controllers/commandsController';
 import { RoleEnum } from './enums';
 import {
@@ -194,6 +195,14 @@ export const creatorCommands: ConstantCommand[] = [
     price: 0,
     minRole: RoleEnum.CREATOR,
     apply: addLbryChannel,
+    validate: withoutValidation,
+  },
+  {
+    name: '/lbry update',
+    description: 'Actualiza los videos de los canales de Lbry',
+    price: 0,
+    minRole: RoleEnum.CREATOR,
+    apply: updateLbryChannels,
     validate: withoutValidation,
   },
 ];

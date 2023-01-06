@@ -26,7 +26,7 @@ import { GroupActionEnum, RoleEnum } from '../constants/enums';
 import { setChatsController } from './chatsController';
 import Command from '../models/Command';
 import { withoutValidation } from './validationsController';
-import { getAllLbryVideos, saveVideosChannel } from '../modules/lbry';
+import { getAllLbryVideos, saveVideosChannel, updateAllLbryChannels } from '../modules/lbry';
 import { getRandomItemsFromArray } from '../utils/utils';
 import User from '../models/User';
 import { postCreateAnimeFace } from '../services/animeFace';
@@ -446,6 +446,17 @@ export const getLbryVideos = async ({ bot, msg, user }: CommandParamsInterface) 
     }));
   } catch (err) {
     bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al obtener los videos, intente nuevamente.' }, { quoted: msg });
+    bot.handleError(err.message);
+  }
+};
+
+export const updateLbryChannels = async ({ bot, msg }: CommandParamsInterface) => {
+  try {
+    await bot.sendMessage(msg.key.remoteJid, { text: 'Actualizando canales...' }, { quoted: msg });
+    await updateAllLbryChannels();
+    await bot.sendMessage(msg.key.remoteJid, { text: 'Canales actualizados exitosamente' }, { quoted: msg });
+  } catch (err) {
+    bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al actualizar los canales, intente nuevamente' }, { quoted: msg });
     bot.handleError(err.message);
   }
 };

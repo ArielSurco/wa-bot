@@ -64,5 +64,5 @@ export const getAllLbryVideos = (): LbryVideo[] => {
 export const updateAllLbryChannels = async () => {
   const lbryData: LbryItemData[] = getData('lbry');
   const channels = lbryData.map((item) => item.channel);
-  await Promise.all(channels.map((channel) => saveVideosChannel(channel)));
+  await Promise.all(channels.map((channel) => saveVideosChannel(channel, () => {})));
 };
