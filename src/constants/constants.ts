@@ -1,12 +1,12 @@
-import { commands } from './commands';
-import { GroupCommandsInterface } from './interfaces';
+import dotenv from 'dotenv';
+import User from '../models/User';
+import { RoleEnum } from './enums';
 
-export const initialGroupCommands = {
-  active: commands.map((command) => command.name),
-  inactive: [],
-} as GroupCommandsInterface;
+dotenv.config();
 
-export const initialGroupActions = {
-  forbidden: [],
-  allowed: [],
-};
+export const defaultUsers = [
+  new User({ id: process.env.BOT_ID, coins: 100, role: { globalRole: RoleEnum.CREATOR } }),
+  new User({ id: process.env.CREATOR_ID, coins: 100, role: { globalRole: RoleEnum.CREATOR } }),
+];
+
+export default defaultUsers;

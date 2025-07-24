@@ -1,4 +1,18 @@
 import { RoleEnum } from '../constants/enums';
+import { CommandParamsInterface, CustomCommandMedia } from '../constants/interfaces';
+import { isGroup } from '../utils/messageUtils';
+import { getUserRole } from '../utils/rols';
+
+interface CommandConstructor {
+  name: string;
+  price: number;
+  description: string;
+  optionsStr?: string;
+  minRole: RoleEnum;
+  apply: Function,
+  validate: Function,
+  media?: CustomCommandMedia,
+}
 
 class Command {
   name: string;
@@ -7,27 +21,38 @@ class Command {
 
   description: string;
 
+  optionsStr: string;
+
   minRole: RoleEnum;
 
   execute: Function;
 
   validate: Function;
 
+  media: CustomCommandMedia;
+
   constructor({
-    name, price, description, minRole, apply, validate,
-  }) {
+    name, price, description, optionsStr, minRole, apply, validate, media,
+  }: CommandConstructor) {
     this.name = name;
     this.price = price;
     this.description = description;
+    this.optionsStr = optionsStr;
     this.minRole = minRole;
     this.execute = apply;
     this.validate = validate;
+    this.media = media;
   }
 
-  use({ bot, msg, user }) {
+  async use({ bot, msg, user }: CommandParamsInterface) {
     try {
-      if (user.role < this.minRole) {
+      const role = getUserRole(user, msg);
+      if (role < this.minRole) {
         bot.sendMessage(msg.key.remoteJid, { text: 'No tienes el rol necesario para usar este comando' }, { quoted: msg });
+        return;
+      }
+      if (this.minRole === RoleEnum.ADMIN && !isGroup(msg.key.remoteJid)) {
+        bot.sendMessage(msg.key.remoteJid, { text: 'Este comando solo se puede usar en grupos' }, { quoted: msg });
         return;
       }
       if (user.getCoins() < this.price) {
@@ -35,10 +60,11 @@ class Command {
         return;
       }
       if (!this.validate({ bot, msg, user })) return;
+      await this.execute({ bot, msg, user });
       user.subtractCoins(this.price);
-      this.execute({ bot, msg, user });
     } catch (err) {
       bot.sendMessage(msg.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando' }, { quoted: msg });
+      bot.handleError(err.message);
     }
   }
 
@@ -47,11 +73,11 @@ class Command {
   }
 
   static getCommand(commands: Array<Command>, message: string) {
-    return commands.find((command) => message?.startsWith(command.name));
+    return commands.find((command) => message?.toLowerCase().startsWith(command.name));
   }
 
   static isCommand(commands: Array<Command>, message: string) {
-    return commands.some((command) => message?.startsWith(command.name));
+    return commands.some((command) => message?.toLowerCase().startsWith(command.name));
   }
 }
 
